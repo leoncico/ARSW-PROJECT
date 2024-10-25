@@ -3,7 +3,7 @@ var indexApp = (function () {
         var options = $('#options');
         options.toggle();
         if (options.is(':visible')) {
-            options.html(`
+            options.append(`
                 <input id='nameInput' placeholder='Write your name' maxlength="10">
                 <button id='confirm'>Continue</button>
             `);
@@ -20,6 +20,11 @@ var indexApp = (function () {
         }
         else{
             alert("Searching match ...");
+            $.get( "/matches", function() {
+                window.location.href = "/matches";
+            }).fail(function(){
+                alert("Error");
+            });
         }
     }
 
