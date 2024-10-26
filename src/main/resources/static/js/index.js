@@ -11,22 +11,21 @@ var indexApp = (function () {
         } else {
             options.empty();
         }
-    }
+    };
 
     var search = function() {
-        var name = $('#nameInput').val();
-        if(!name){
+        var username = $('#nameInput').val();
+        if (!username) {
             alert("Write a valid name");
-        }
-        else{
+        } else {
             alert("Searching match ...");
-            $.get( "/matches", function() {
-                window.location.href = "/matches";
-            }).fail(function(){
+            $.post("/matches/login", {username: username}, function() {
+                window.location.href = "lobby.html";
+            }).fail(function() {
                 alert("Error");
             });
         }
-    }
+    };
 
     return {
         init: function() {
@@ -34,5 +33,5 @@ var indexApp = (function () {
                 toggleInput();
             });
         }
-    }
+    };
 })();

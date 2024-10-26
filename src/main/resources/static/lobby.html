@@ -4,10 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LeoTankcicos</title>
-    <link rel="stylesheet" href="/css/lobby.css">
+    <!-- <link rel="stylesheet" href="css/lobby.css"> -->
+    
 </head>
 
-<body>
+<body onload="lobbyApp.init()">
     <h1>ROOM</h1>
+    <h2>Tanques Creados</h2>
+    <ul id="tanksList"></ul>
+
+    <script src="js/lobby.js"></script>
+    <script src="/webjars/jquery/3.7.1/jquery.min.js"></script>
+    <script src="/webjars/sockjs-client/1.5.1/sockjs.min.js"></script>
+    <script src="/webjars/stomp-websocket/2.3.4/stomp.min.js"></script>
 </body>
 </html>
