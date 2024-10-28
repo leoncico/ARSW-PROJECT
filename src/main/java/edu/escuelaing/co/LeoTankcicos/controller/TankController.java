@@ -1,6 +1,6 @@
-package edu.escuelaing.co.leotankcicos.controller;
+package edu.escuelaing.co.LeoTankcicos.controller;
 
-import java.util.List;
+import java.util.*;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -19,6 +19,7 @@ import jakarta.servlet.http.HttpSession;
 public class TankController {
     
     TankService tankService;
+    private Map<Integer,Tank> tanks = new HashMap<>();
 
     @Autowired
     public TankController(TankService tankService){
@@ -48,4 +49,7 @@ public class TankController {
             return new ResponseEntity<>("Username not found", HttpStatus.NOT_FOUND);
         }
     }
+
+
 }
+

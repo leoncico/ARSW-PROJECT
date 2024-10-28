@@ -15,6 +15,12 @@ public class Tank {
 
     public Tank() {}
 
+    public Tank(String name, int x, int y, String color) {
+        this.name = name;
+        this.position = new int[] {x, y};
+        this.color = color;
+    }
+
     public String getId() {
         return id;
     }
