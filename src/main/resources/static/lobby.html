@@ -4,14 +4,33 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LeoTankcicos</title>
-    <!-- <link rel="stylesheet" href="css/lobby.css"> -->
+    <link rel="stylesheet" href="css/lobby.css">
     
 </head>
 
 <body onload="lobbyApp.init()">
-    <h1>ROOM</h1>
-    <h2>Tanques Creados</h2>
-    <ul id="tanksList"></ul>
+    <div class="space">
+        <div class="logo-container">
+        <img src="img/Logo.png" class="logo">
+        </div>
+        <h3>LeoTankcicos</h3>
+
+        <h1>ROOM #1</h1>
+
+        <div class="player-count">
+            <img src="img/persona.png" alt="Icono de jugador" class="player-icon">
+            <span class="player-count-number" id="playerNumber">3</span>
+        </div>
+
+        <h2>Jugadores:</h2>    
+
+        <ul id="tanksList">
+            <li><span class="color-box"></span>Jeitson</li>
+            <li><span class="color-box"></span>Mutsia</li>
+            <li><span class="color-box"></span>LeonarGOD</li>
+        </ul>
+        
+    </div>
 
     <script src="js/lobby.js"></script>
     <script src="/webjars/jquery/3.7.1/jquery.min.js"></script>
