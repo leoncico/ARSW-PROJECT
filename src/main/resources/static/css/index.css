@@ -1,0 +1,106 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    background-color: #1a1a1a;
+    color: #f0f0f0;
+    overflow: hidden;
+}
+
+h1 {
+    font-size: 4rem;
+    margin-bottom: 30px;
+    text-shadow: 2px 2px #333;
+    font-size: 100px;
+    transition: transform 0.3s ease;
+}
+
+h1 .red {
+    color: red;
+}
+
+h1 .blue {
+    color: blue;
+}
+
+
+h1:hover{
+    transform: rotate(-5deg);
+}
+
+h1:hover .red {
+    color: rgba(245, 67, 67, 0.975);
+}
+
+h1:hover .blue {
+    color: rgb(54, 54, 255);
+}
+
+h1 .red, h1 .blue {
+    transition: color 0.3s ease;
+}
+
+
+
+button {
+    font-size: 2rem;
+    padding: 15px 30px;
+    color: #fff;
+    background-color: #2084d6;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background-color: #1643b7;
+}
+
+#options {
+    width: 80%;
+    max-width: 600px;
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #333;
+    border-radius: 10px;
+    display: none;
+    color: #fff;
+    text-align: center;
+}
+
+#creators {
+    position: fixed;
+    bottom: 10px;
+    left: 10px;
+    font-size: 1.2rem;
+    color: #bbb;
+    font-style: italic;
+}
+
+#nameInput {
+    width: 100%;
+    max-width: 300px;
+    padding: 12px 15px;
+    font-size: 1rem;
+    color: #333;
+    background-color: #f7f7f7;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    outline: none;
+    transition: all 0.3s ease;
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+    
+
+}
+
+

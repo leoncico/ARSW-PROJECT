@@ -5,7 +5,7 @@ var indexApp = (function () {
         if (options.is(':visible')) {
             options.append(`
                 <input id='nameInput' placeholder='Write your name' maxlength="10">
-                <button id='confirm'>Continue</button>
+                <div><button id='confirm'>Continue</button></div>
             `);
             $('#confirm').click(search);
         } else {
