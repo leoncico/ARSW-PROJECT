@@ -7,25 +7,29 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class Tank {
     
     @Id
-    private String id;
+    private int id;
     private String color;
     private String name;
     private boolean alive;
-    private int[] position;
+    private int posx;
+    private int posy;
+    private int rotation;
 
     public Tank() {}
 
-    public Tank(String name, int x, int y, String color) {
-        this.name = name;
-        this.position = new int[] {x, y};
+    public Tank(int id, int x, int y, String color, int rotation) {
+        this.id = id;
+        this.posx = x;
+        this.posy = y;
         this.color = color;
+        this.rotation = rotation;
     }
 
-    public String getId() {
+    public int getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public void setId(int id) {
         this.id = id;
     }
 
@@ -53,11 +57,22 @@ public class Tank {
         this.alive = alive;
     }
 
-    public int[] getPosition() {
-        return position;
+    public int getPosx() {
+        return posx;
+    }
+    public void setPosx(int posx) {
+        this.posx = posx;
     }
 
-    public void setPosition(int[] position) {
-        this.position = position;
+    public int getPosy() {
+        return posy;
+    }
+    public void setPosy(int posy) {
+        this.posy = posy;
+    }
+    public int getRotation() { return rotation; }
+
+    public void setRotation(int i) {
+        this.rotation = i;
     }
 }

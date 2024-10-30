@@ -5,7 +5,7 @@ var lobbyApp = (function () {
     var tankList;
 
     var getUsernameFromSession = function() {
-        return $.get("/matches/username")
+        return $.get("/api/matches/username")
             .done(function(data) {
                 username = data;
                 console.log("User:", username);
@@ -17,7 +17,7 @@ var lobbyApp = (function () {
 
     var loadTanks = function() {
         return new Promise((resolve, reject) => {
-            $.get("/matches/tanks")
+            $.get("/api/matches/tanks")
                 .done(function(tanks) {
                     tankList = tanks;
                     displayTanks(tanks);
@@ -44,6 +44,7 @@ var lobbyApp = (function () {
                         // Este código se ejecuta una vez que loadTanks se complete
                         if (tankList.length >= 3) {
                             alert("Starting match");
+                            window.location.href = "board.html";
                         }
                     }).catch((error) => {
                         console.error(error); // Manejo de errores si loadTanks falla

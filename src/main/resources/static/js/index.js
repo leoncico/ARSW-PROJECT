@@ -19,7 +19,7 @@ var indexApp = (function () {
             alert("Write a valid name");
         } else {
             alert("Searching match ...");
-            $.post("/matches/login", {username: username}, function() {
+            $.post("/api/matches/login", {username: username}, function() {
                 window.location.href = "lobby.html";
             }).fail(function() {
                 alert("Error");
