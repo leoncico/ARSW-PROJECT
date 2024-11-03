@@ -1,4 +1,7 @@
 var indexApp = (function () {
+
+    var tank;
+
     var toggleInput = function() {
         var options = $('#options');
         options.toggle();
@@ -19,7 +22,8 @@ var indexApp = (function () {
             alert("Write a valid name");
         } else {
             alert("Searching match ...");
-            $.post("/api/matches/login", {username: username}, function() {
+            $.post("/api/tanks/login", {username: username}, function(response) {
+                tank = response;
                 window.location.href = "lobby.html";
             }).fail(function() {
                 alert("Error");

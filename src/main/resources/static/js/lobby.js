@@ -3,9 +3,10 @@ var lobbyApp = (function () {
     var stompClient;
     var tanksElem;
     var tankList;
+    var tankNumber;
 
     var getUsernameFromSession = function() {
-        return $.get("/api/matches/username")
+        return $.get("/api/tanks/username")
             .done(function(data) {
                 username = data;
                 console.log("User:", username);
@@ -17,11 +18,13 @@ var lobbyApp = (function () {
 
     var loadTanks = function() {
         return new Promise((resolve, reject) => {
-            $.get("/api/matches/tanks")
+            $.get("/api/tanks")
                 .done(function(tanks) {
                     tankList = tanks;
                     displayTanks(tanks);
-                    console.log(tanksElem.length);
+                    tankNumber = $('#playerNumber');
+                    tankNumber.text(tankList.length);
+                    
                     resolve(tanks); // Resuelve la promesa con los tanques cargados
                 })
                 .fail(function() {
@@ -58,12 +61,13 @@ var lobbyApp = (function () {
     };
 
     var displayTanks = function(tanks) {
-        tanksElem = $('#tanksElem');
+        tanksElem = $('#tanksList');
         tanksElem.empty();
-
+        tankNumber = 
         tanks.forEach(function(tank) {
             tanksElem.append(`<li>${tank.name}</li>`);
         });
+
     };
 
     var connect = function() {

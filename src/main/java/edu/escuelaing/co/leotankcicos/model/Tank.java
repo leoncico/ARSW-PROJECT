@@ -1,5 +1,6 @@
 package edu.escuelaing.co.leotankcicos.model;
 
+import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -7,9 +8,8 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class Tank {
     
     @Id
-    private int id;
-    private String color;
     private String name;
+    private String color;
     private boolean alive;
     private int posx;
     private int posy;
@@ -17,20 +17,13 @@ public class Tank {
 
     public Tank() {}
 
-    public Tank(int id, int x, int y, String color, int rotation) {
-        this.id = id;
+    public Tank(int x, int y, String color, int rotation, String name) {
         this.posx = x;
         this.posy = y;
         this.color = color;
         this.rotation = rotation;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
+        this.name = name;
+        alive = true;
     }
 
     public String getColor() {

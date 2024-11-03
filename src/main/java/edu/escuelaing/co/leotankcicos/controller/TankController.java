@@ -2,6 +2,7 @@ package edu.escuelaing.co.leotankcicos.controller;
 
 import java.util.*;
 
+import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,34 +14,33 @@ import jakarta.servlet.http.HttpSession;
 
 @RestController
 @CrossOrigin(origins = "*")
-@RequestMapping("/api")  // Base path para todas las rutas
+@RequestMapping("/api/tanks")
 public class TankController {
 
     private final TankService tankService;
-    private Map<Integer,Tank> tanks = new HashMap<>();
-    private int tankId = 0;
 
     @Autowired
     public TankController(TankService tankService){
         this.tankService = tankService;
     }
 
-    @PostMapping("/matches/login")
+    //Crea los tanques
+    @PostMapping("/login")
     public ResponseEntity<Tank> createTank(@RequestParam String username, HttpSession session) {
-        // Almacenar el username en la sesión
         session.setAttribute("username", username);
         Tank newTank = tankService.saveTank(username);
-        tanks.put(newTank.getId(), newTank);
         return new ResponseEntity<>(newTank, HttpStatus.CREATED);
     }
 
-    @GetMapping("/matches/tanques")
+    //Obtiene todos los tanques
+    @GetMapping
     public ResponseEntity<List<Tank>> getAllTanks() {
         List<Tank> tanks = tankService.getAllTanks();
         return new ResponseEntity<>(tanks, HttpStatus.OK);
     }
 
-    @GetMapping("/matches/username")
+    // Ruta para obtener el nombre de usuario
+    @GetMapping("/username")  
     public ResponseEntity<String> getUsername(HttpSession session) {
         String username = (String) session.getAttribute("username");
         if (username != null) {
@@ -50,50 +50,28 @@ public class TankController {
         }
     }
 
-    @PutMapping("/tanks/{id}/move")
-    public ResponseEntity<Tank> moveTank(@PathVariable int id, @RequestParam String direction) {
-        Tank tank = tanks.get(id);
-        if(tank != null) {
-            if (direction.equals("left")) {
-                tank.setPosx(tank.getPosx() - 1);
-                tank.setRotation(-90);
-            } else if (direction.equals("right")) {
-                tank.setPosx(tank.getPosx() + 1);
-                tank.setRotation(90);
-            } else if (direction.equals("up")) {
-                tank.setPosy(tank.getPosy() - 1);
-                tank.setRotation(0);
-            } else if (direction.equals("down")) {
-                tank.setPosy(tank.getPosy() + 1);
-                tank.setRotation(180);
-            }
-        }else {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+    // Mover tanque 
+    @PutMapping("/{id}/move")  
+    public ResponseEntity<Tank> moveTank(@PathVariable String username, @RequestBody Map<String, Integer> moveRequest) {
+        Tank tank = tankService.getTankById(username);
+        if (tank != null) {
+            Integer posX = moveRequest.get("posX");
+            Integer posY = moveRequest.get("posY");
+            Tank updatedTank =  tankService.updateTankPosition(tank, posX, posY);
+            return new ResponseEntity<>(updatedTank, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-
-        //Tank updatedTank = tankService.updateTank(tank);
-        return new ResponseEntity<>(tank, HttpStatus.OK);
     }
 
-    @GetMapping("/tanks/{id}")
-    public ResponseEntity<Tank> getTank(@PathVariable int id) {
-        Tank tank = tankService.getTankById(id);
+    // Obtener un tanque específico
+    @GetMapping("/{id}")  
+    public ResponseEntity<Tank> getTank(@PathVariable String username) {
+        Tank tank = tankService.getTankById(username);
         if (tank == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
         return new ResponseEntity<>(tank, HttpStatus.OK);
-    }
-
-    @PostMapping("/create")
-    public Tank createTank() {
-        Tank tank = new Tank(tankId++, 1, 1, "#4CAF50",0);
-        tanks.put(tank.getId(), tank);
-        return tank;
-    }
-
-    @GetMapping("/tanks")
-    public Collection<Tank> obtenerTanks() {
-        return tanks.values();
     }
 
 }
