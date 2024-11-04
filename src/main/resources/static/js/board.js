@@ -2,11 +2,7 @@ var boardApp = (function(){
 
     const ROWS = 10;
     const COLS = 15;
-    const WALL_PROBABILITY = 0.2;
-    const API_URL = '/api/tanks';
-
     let tanks = new Map();
-    let currentTankId = null;
     let gameBoard;
     let username;
     let userTank;
@@ -15,28 +11,14 @@ var boardApp = (function(){
     function initializeBoard() {
         const board = document.getElementById('gameBoard');
         board.innerHTML = '';
-        gameBoard = [
-            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-            [1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1],
-            [1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1],
-            [1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1],
-            [1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1],
-            [1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1],
-            [1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1],
-            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-        ];
-    
+
         for (let y = 0; y < ROWS; y++) {
             for (let x = 0; x < COLS; x++) {
                 const cell = document.createElement('div');
                 cell.className = 'cell';
-
-                if (gameBoard[y][x] === 1) {
+                if (gameBoard[y][x] === '1') {
                     cell.classList.add('wall');
                 }
-
                 board.appendChild(cell);
             }
         }
@@ -48,27 +30,12 @@ var boardApp = (function(){
                 gameBoard = data;
                 resolve();
             }).fail(function() {
-                alert("There are no tanks");
+                alert("Failed to get board");
                 reject();
             });
         });
     }
 
-    async function createTank() {
-        try {
-            const response = await fetch(`/api/tanks`, {
-                method: 'GET'
-            });
-            const tank = await response.json();
-            console.log(tank);
-            currentTankId = tank.id;
-            tanks.set(tank.id, tank);
-            placeTank(tank);
-        }catch (error) {
-            console.error("No se pudo crear tanque :c",error);
-        }
-    }
-    
     function getTanks(){
         return new Promise ((resolve, reject) => {
             $.get("/api/tanks", function(data) {
@@ -99,17 +66,14 @@ var boardApp = (function(){
         });
     }
     
-    // Mover el tanque
-    async function moveTank(direction) {
-        if (!currentTankId) return;
-    
-        // Obtener el tanque actual
-        const currentTank = tanks.get(currentTankId);
-        if (!currentTank) return;
-    
-        // Calcular la nueva posición según la dirección
-        let newPosX = currentTank.posx;
-        let newPosY = currentTank.posy;
+    function moveTank(direction) {
+        if (!userTank) return;
+        
+        let x = userTank.posx;
+        let y = userTank.posy;
+
+        let newPosX = userTank.posx;
+        let newPosY = userTank.posy;
     
         switch (direction) {
             case 'left':
@@ -129,46 +93,45 @@ var boardApp = (function(){
                 return;
         }
     
-        // Verificar colisiones antes de hacer el fetch
-        if (gameBoard[newPosY] && gameBoard[newPosY][newPosX] === 0) {
-            try {
-                $.ajax({
-                    url: `/api/tanks/${currentTankId}/move`,
-                    type: 'PUT',
-                    contentType: 'application/json',
-                    data: JSON.stringify({
-                        posX: newPosX,
-                        posY: newPosY
-                    }),
-                    success: function(updatedTank) {
-                        tanks.set(updatedTank.id, updatedTank);
-                        updateTankPosition(updatedTank);
-                    },
-                    error: function(jqXHR) {
-                        if (jqXHR.status === 409) {
-                            alert('Movimiento no permitido: colisión detectada en el servidor.');
-                        } else {
-                            console.error('Error al mover el tanque:', jqXHR.statusText);
-                        }
+        try {
+            $.ajax({
+                url: `/api/tanks/${username}/move`,
+                type: 'PUT',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    posX: x,
+                    posY: y,
+                    newPosX: newPosX,
+                    newPosY: newPosY
+                }),
+                success: function(updatedTank) {
+                    tanks.set(updatedTank.name, updatedTank);
+                    updateTankPosition(updatedTank);
+                    console.log('x:'+ x + 'y' + y);
+                    console.log('x:'+ newPosX + 'y' + newPosX);
+                },
+                error: function(jqXHR) {
+                    if (jqXHR.status === 409) {
+                        alert('Movimiento no permitido: colisión detectada en el servidor.');
+                    } else {
+                        console.error('Error al mover el tanque:', jqXHR.statusText);
                     }
-                });
-    
-            } catch (error) {
-                console.error('Error moving tank:', error);
-            }
-        } else {
-            alert('No puedes cruzar por las paredes');
+                }
+            });
+
+        } catch (error) {
+            console.error('Error moving tank:', error);
         }
+
     }
 
-    function updateTankPosition(tank) {
-        console.log("xd");
-        const tankElement = document.getElementById(`tank-${tank.id}`);
+    function updateTankPosition(updatedTank) {
+        const tankElement = document.getElementById(`tank-${updatedTank.name}`);
         if (tankElement) {
             const cells = document.getElementsByClassName('cell');
-            const newCellIndex = tank.posy * COLS + tank.posx;
+            const newCellIndex = updatedTank.posy * COLS + updatedTank.posx;
             cells[newCellIndex].appendChild(tankElement);
-            rotateTank(tank.id, tank.rotation);
+            rotateTank(updatedTank.id, updatedTank.rotation);
         }
     }
     
@@ -195,8 +158,7 @@ var boardApp = (function(){
     function getTank(){
         return new Promise((resolve, reject) => {
             $.get(`/api/tanks/${username}`, function(tank) {
-                userTank = tank; 
-                console.log(userTank);
+                userTank = tank;
                 resolve();
             }).fail(function() {
                 alert("There is no user with that name");
@@ -228,16 +190,17 @@ var boardApp = (function(){
         stompClient = Stomp.over(socket);
         stompClient.connect({}, function (frame) {
             console.log('Connected: ' + frame);
-            stompClient.subscribe('/topic/matches/1/init', function (eventbody) {
-
+            stompClient.subscribe('/topic/matches/1/movement', function (eventbody) {
+                
             },);
         });
     }
 
     return {
         init: function() {
-            initializeBoard();
             getUsername()
+                .then(() => getBoard())
+                .then(() => initializeBoard())
                 .then(() => getTank())
                 .then(() => subscribe())
                 .then(() => getTanks())
