@@ -70,15 +70,10 @@ public class TankController {
         Integer posY = moveRequest.get("posY");
         Integer newPosX = moveRequest.get("newPosX");
         Integer newPosY = moveRequest.get("newPosY");
-
-        // Validate current position matches
-        // if (!(tank.getPosx() == posX) || !(tank.getPosy() ==posY)) {
-        //     return new ResponseEntity<>(HttpStatus.CONFLICT);
-        // }
+        Integer rotation = moveRequest.get("rotation");
 
         try {
-            // Update position and validate in service layer
-            tank = tankService.updateTankPosition(tank, posX, posY, newPosX, newPosY);
+            tank = tankService.updateTankPosition(tank, posX, posY, newPosX, newPosY, rotation);
             return new ResponseEntity<>(tank, HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.CONFLICT);

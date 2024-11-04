@@ -92,6 +92,7 @@ var boardApp = (function(){
 
         let x = userTank.posx;
         let y = userTank.posy;
+        let dir = userTank.rotation;
 
         let newPosX = x;
         let newPosY = y;
@@ -99,15 +100,19 @@ var boardApp = (function(){
         switch (direction) {
             case 'left':
                 newPosX -= 1;
+                dir = 180;
                 break;
             case 'right':
                 newPosX += 1;
+                dir = 0;
                 break;
             case 'up':
                 newPosY -= 1;
+                dir = -90;
                 break;
             case 'down':
                 newPosY += 1;
+                dir = 90;
                 break;
             default:
                 console.error('Dirección inválida:', direction);
@@ -123,7 +128,8 @@ var boardApp = (function(){
                 posX: x,
                 posY: y,
                 newPosX: newPosX,
-                newPosY: newPosY
+                newPosY: newPosY,
+                rotation: dir
             }),
             success: function(updatedTank) {
                 userTank = updatedTank;
