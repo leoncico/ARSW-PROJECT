@@ -72,9 +72,9 @@ public class TankController {
         Integer newPosY = moveRequest.get("newPosY");
 
         // Validate current position matches
-        if (!(tank.getPosx() == posX) || !(tank.getPosy() ==posY)) {
-            return new ResponseEntity<>(HttpStatus.CONFLICT);
-        }
+        // if (!(tank.getPosx() == posX) || !(tank.getPosy() ==posY)) {
+        //     return new ResponseEntity<>(HttpStatus.CONFLICT);
+        // }
 
         try {
             // Update position and validate in service layer
@@ -122,5 +122,6 @@ public class TankController {
         return new ResponseEntity<>(bullet, HttpStatus.OK);
     }
 
+    
 }
 

@@ -21,6 +21,8 @@ public class TankService {
     private int bulletId;
     private Board board;
 
+    private static final int MAX_PLAYERS = 3;
+
     @Autowired
     public TankService(TankRepository tankRepository, Board board){
         this.tankRepository = tankRepository;
@@ -41,7 +43,12 @@ public class TankService {
         defaultColors.add("#1e8449");
     }
 
-    public Tank saveTank(String name) throws Exception {
+    public synchronized Tank saveTank(String name) throws Exception {
+
+        if(tankRepository.count() >= MAX_PLAYERS){
+            throw new Exception("The room is full");
+        }
+
         if(tankRepository.findById(name).isPresent()){
             throw new Exception("Tank with this name already exists");
         }
@@ -94,11 +101,6 @@ public class TankService {
             System.out.println();
         }
     }
-
-    public void moveTank(){
-
-    }
-
 
     public Bullet shoot(String username) {
         Tank tank = tankRepository.findById(username).get();

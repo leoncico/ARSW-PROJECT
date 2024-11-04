@@ -50,8 +50,19 @@ var boardApp = (function(){
         });
     }
 
+    function getTank(){
+        return new Promise((resolve, reject) => {
+            $.get(`/api/tanks/${username}`, function(tank) {
+                userTank = tank;
+                resolve();
+            }).fail(function() {
+                alert("There is no user with that name");
+                reject();
+            });
+        });
+    }
+
     function placeTanks() {
-        console.log(tanks);
         tanks.forEach((value, key) => {
             gameBoard[value.posy][value.posx] = value.name;
         });
@@ -66,15 +77,19 @@ var boardApp = (function(){
         });
     }
     
+    let isMoving = false; // Estado de bloqueo
+
     function moveTank(direction) {
-        if (!userTank) return;
-        
+        if (!userTank || isMoving) return; // Si no hay tanque del usuario o está en movimiento, no hacer nada
+
+        isMoving = true; // Activar el bloqueo de movimiento al inicio
+
         let x = userTank.posx;
         let y = userTank.posy;
 
-        let newPosX = userTank.posx;
-        let newPosY = userTank.posy;
-    
+        let newPosX = x;
+        let newPosY = y;
+
         switch (direction) {
             case 'left':
                 newPosX -= 1;
@@ -90,41 +105,38 @@ var boardApp = (function(){
                 break;
             default:
                 console.error('Dirección inválida:', direction);
+                isMoving = false;
                 return;
         }
-    
-        try {
-            $.ajax({
-                url: `/api/tanks/${username}/move`,
-                type: 'PUT',
-                contentType: 'application/json',
-                data: JSON.stringify({
-                    posX: x,
-                    posY: y,
-                    newPosX: newPosX,
-                    newPosY: newPosY
-                }),
-                success: function(updatedTank) {
-                    userTank = updatedTank;
-                    tanks.set(updatedTank.name, updatedTank);
-                    gameBoard[y][x] = '0';  // Clear old position
-                    gameBoard[newPosY][newPosX] = updatedTank.name;
-                    updateTankPosition(updatedTank);
-                    console.log('x:'+ x + 'y' + y);
-                    console.log('nuevox:'+ newPosX + 'nuievoy' + newPosY);
-                },
-                error: function(jqXHR) {
-                    if (jqXHR.status === 409) {
-                        alert('Movimiento no permitido: colisión detectada en el servidor.');
-                    } else {
-                        console.error('Error al mover el tanque:', jqXHR.statusText);
-                    }
-                }
-            });
 
-        } catch (error) {
-            console.error('Error moving tank:', error);
-        }
+        $.ajax({
+            url: `/api/tanks/${username}/move`,
+            type: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                posX: x,
+                posY: y,
+                newPosX: newPosX,
+                newPosY: newPosY
+            }),
+            success: function(updatedTank) {
+                userTank = updatedTank;
+                tanks.set(updatedTank.name, updatedTank);
+                gameBoard[y][x] = '0'; // Limpiar posición anterior
+                gameBoard[newPosY][newPosX] = updatedTank.name;
+                updateBoard(updatedTank);
+            },
+            error: function(jqXHR) {
+                if (jqXHR.status === 409) {
+                    alert('Movimiento no permitido: colisión detectada en el servidor.');
+                } else {
+                    console.error('Error al mover el tanque:', jqXHR.statusText);
+                }
+            },
+            complete: function() {
+                isMoving = false;
+            }
+        });
     }
 
     function updateTankPosition(updatedTank) {
@@ -134,7 +146,6 @@ var boardApp = (function(){
             const newCellIndex = updatedTank.posy * COLS + updatedTank.posx;
             cells[newCellIndex].appendChild(tankElement);
             rotateTank(updatedTank.name, updatedTank.rotation);
-            console.log('todo good');
         }
     }
     
@@ -143,14 +154,13 @@ var boardApp = (function(){
         if (tank) {
             tank.style.transform = `translate(-50%, -50%) rotate(${degrees}deg)`;
         }
-        console.log('todo bien');
     }
     
     function getUsername(){
         return new Promise((resolve, reject) => {
             $.get("/api/tanks/username", function(data) {
                 username = data;
-                console.log(username);
+                console.log("Player: " + username)
                 resolve();
             }).fail(function() {
                 alert("There is no user with that name");
@@ -159,16 +169,12 @@ var boardApp = (function(){
         });
     }
 
-    function getTank(){
-        return new Promise((resolve, reject) => {
-            $.get(`/api/tanks/${username}`, function(tank) {
-                userTank = tank;
-                resolve();
-            }).fail(function() {
-                alert("There is no user with that name");
-                reject();
-            });
-        });
+    function updateBoard(username) {
+        getBoard()
+            .then(() => {
+                stompClient.send('/topic/matches/1/movement', {}, JSON.stringify(username));
+            })
+            .then(() => console.log(gameBoard));
     }
 
     document.addEventListener('keydown', (e) => {
@@ -195,8 +201,10 @@ var boardApp = (function(){
         stompClient.connect({}, function (frame) {
             console.log('Connected: ' + frame);
             stompClient.subscribe('/topic/matches/1/movement', function (eventbody) {
-                
-            },);
+                const newTankState = JSON.parse(eventbody.body);
+
+                updateTankPosition(newTankState);
+            });
         });
     }
 
@@ -327,12 +335,10 @@ var boardApp = (function(){
             bullets.delete(bullet.id);
             return;
         }
-
-
-
-
     }
 
+
+    
     // Remover elemento de la bala
      function removeBulletElement(bulletId) {
         const bulletElement = document.getElementById(`bullet-${bulletId}`);
@@ -382,8 +388,8 @@ var boardApp = (function(){
             getUsername()
                 .then(() => getBoard())
                 .then(() => initializeBoard())
-                .then(() => getTank())
                 .then(() => subscribe())
+                .then(() => getTank())
                 .then(() => getTanks())
                 .then(() => placeTanks());
             
