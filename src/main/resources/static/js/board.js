@@ -66,6 +66,12 @@ var boardApp = (function(){
         tanks.forEach((value, key) => {
             gameBoard[value.posy][value.posx] = value.name;
         });
+
+        console.log("=============================");
+        console.log(tanks);
+        console.log(gameBoard);
+        console.log("=============================");
+
         const cells = document.getElementsByClassName('cell');
         tanks.forEach((data) => {
             const tankElement = document.createElement('div');
@@ -179,16 +185,16 @@ var boardApp = (function(){
 
     document.addEventListener('keydown', (e) => {
         switch(e.key) {
-            case 'ArrowLeft':
+            case 'a':
                 moveTank('left');
                 break;
-            case 'ArrowRight':
+            case 'd':
                 moveTank('right');
                 break;
-            case 'ArrowUp':
+            case 'w':
                 moveTank('up');
                 break;
-            case 'ArrowDown':
+            case 's':
                 moveTank('down');
                 break;
         }
@@ -388,11 +394,11 @@ var boardApp = (function(){
             getUsername()
                 .then(() => getBoard())
                 .then(() => initializeBoard())
-                .then(() => subscribe())
+            
                 .then(() => getTank())
                 .then(() => getTanks())
-                .then(() => placeTanks());
-            
+                .then(() => placeTanks())
+                .then(() => subscribe());
         }
     }
 })();

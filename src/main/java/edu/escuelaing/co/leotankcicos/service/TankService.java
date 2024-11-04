@@ -48,13 +48,12 @@ public class TankService {
         if(tankRepository.count() >= MAX_PLAYERS){
             throw new Exception("The room is full");
         }
-
-        if(tankRepository.findById(name).isPresent()){
-            throw new Exception("Tank with this name already exists");
+        if(tankRepository.findById(name).isPresent() || name.equals("1") || name.equals("0")){
+            throw new Exception("Tank with this name already exists or is invalid");
         }
-
         int[] position = defaultPositions.poll();
         Tank newTank = new Tank(position[0], position[1], defaultColors.poll(), 0, name);
+        board.putTank(name, position[0], position[1]);
         tankRepository.save(newTank);
         return newTank;
     }
