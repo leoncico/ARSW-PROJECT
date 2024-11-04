@@ -2,6 +2,7 @@ package edu.escuelaing.co.leotankcicos.controller;
 
 import java.util.*;
 
+import edu.escuelaing.co.leotankcicos.model.Bullet;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -102,5 +103,24 @@ public class TankController {
         }
         return new ResponseEntity<>(board, HttpStatus.OK);
     }
+
+    @PostMapping("/{username}/shoot")
+    public ResponseEntity<Bullet> shoot(@PathVariable String username) {
+            Bullet bullet = tankService.shoot(username);
+            if (bullet == null) {
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
+            return new ResponseEntity<>(bullet, HttpStatus.CREATED);
+    }
+
+    @GetMapping("/bullets/{bulletId}/position")
+    public ResponseEntity<Bullet> getBulletPosition(@PathVariable int bulletId) {
+        Bullet bullet = tankService.getBulletPosition(bulletId);
+        if (bullet == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(bullet, HttpStatus.OK);
+    }
+
 }
 
