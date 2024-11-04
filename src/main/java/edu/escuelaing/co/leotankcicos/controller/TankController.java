@@ -26,10 +26,17 @@ public class TankController {
 
     //Crea los tanques
     @PostMapping("/login")
-    public ResponseEntity<Tank> createTank(@RequestParam String username, HttpSession session) {
+    public ResponseEntity<?> createTank(@RequestParam String username, HttpSession session) {
         session.setAttribute("username", username);
-        Tank newTank = tankService.saveTank(username);
-        return new ResponseEntity<>(newTank, HttpStatus.CREATED);
+        Tank newTank;
+        try {
+            newTank = tankService.saveTank(username);
+            return new ResponseEntity<>(newTank, HttpStatus.CREATED);
+        } catch (Exception e) {
+            System.err.println("Error saving tank: " + e.getMessage());
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.CONFLICT);
+        }
+        
     }
 
     //Obtiene todos los tanques
@@ -65,7 +72,7 @@ public class TankController {
     }
 
     // Obtener un tanque específico
-    @GetMapping("/{id}")  
+    @GetMapping("/{username}")  
     public ResponseEntity<Tank> getTank(@PathVariable String username) {
         Tank tank = tankService.getTankById(username);
         if (tank == null) {
@@ -74,5 +81,13 @@ public class TankController {
         return new ResponseEntity<>(tank, HttpStatus.OK);
     }
 
+    @GetMapping("/board")
+    public ResponseEntity<String[][]> getBoard() {
+        String[][] board = tankService.getBoard();
+        if (board == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(board, HttpStatus.OK);
+    }
 }
 

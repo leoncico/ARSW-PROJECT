@@ -8,14 +8,10 @@ var boardApp = (function(){
     let tanks = new Map();
     let currentTankId = null;
     let gameBoard;
+    let username;
+    let userTank;
+    var stompClient;
 
-    async function initializeGame() {
-        console.log("Inicializando el juego...");
-        initializeBoard();
-        await createTank();
-    }
-    
-    // Inicializar el tablero
     function initializeBoard() {
         const board = document.getElementById('gameBoard');
         board.innerHTML = '';
@@ -46,6 +42,18 @@ var boardApp = (function(){
         }
     }
     
+    function getBoard(){
+        return new Promise ((resolve, reject) => {
+            $.get("/api/tanks/board", function(data) {
+                gameBoard = data;
+                resolve();
+            }).fail(function() {
+                alert("There are no tanks");
+                reject();
+            });
+        });
+    }
+
     async function createTank() {
         try {
             const response = await fetch(`/api/tanks`, {
@@ -61,38 +69,34 @@ var boardApp = (function(){
         }
     }
     
-    function placeTank(tank) {
-        if (!tank) {
-            console.error("No se proporcionó un tanque válido.");
-            return;
-        }
-    
-        // Verificar que las coordenadas del tanque estén dentro de los límites
-        if (tank.posy < 1 || tank.posy >= ROWS - 1 || tank.x < 1 || tank.x >= COLS - 1) {
-            console.error("Posición del tanque fuera de los límites del tablero:", tank);
-            return;
-        }
-    
-        const tankElement = document.createElement('div');
-        tankElement.className = 'tank';
-        tankElement.id = `tank-${tank.id}`;
-        tankElement.style.backgroundColor = tank.color;
-    
+    function getTanks(){
+        return new Promise ((resolve, reject) => {
+            $.get("/api/tanks", function(data) {
+                data.forEach(tank => {
+                    tanks.set(tank.name, tank);
+                });
+                resolve();
+            }).fail(function() {
+                alert("There are no tanks");
+                reject();
+            });
+        });
+    }
+
+    function placeTanks() {
+        console.log(tanks);
+        tanks.forEach((value, key) => {
+            gameBoard[value.posy][value.posx] = value.name;
+        });
         const cells = document.getElementsByClassName('cell');
-        const cellIndex = tank.posy * COLS + tank.posx;
-    
-        // Verificar el valor de cellIndex
-        console.log("Índice de celda calculado:", cellIndex);
-        console.log("y:", tank.posy, "x:", tank.posx);
-    
-        // Verificar que cellIndex sea válido
-        if (cellIndex < 0 || cellIndex >= cells.length) {
-            console.error("Índice de celda fuera de los límites:", cellIndex);
-            return;
-        }
-    
-        cells[cellIndex].appendChild(tankElement);
-        rotateTank(tank.id, tank.rotation);
+        tanks.forEach((data) => {
+            const tankElement = document.createElement('div');
+            tankElement.className = 'tank';
+            tankElement.id = `tank-${data.id}`;
+            tankElement.style.backgroundColor = data.color;
+            const cellIndex = data.posy * COLS + data.posx;
+            cells[cellIndex].appendChild(tankElement);
+        });
     }
     
     // Mover el tanque
@@ -156,8 +160,7 @@ var boardApp = (function(){
             alert('No puedes cruzar por las paredes');
         }
     }
-    
-    // Actualizar la posición del tanque en el tablero
+
     function updateTankPosition(tank) {
         console.log("xd");
         const tankElement = document.getElementById(`tank-${tank.id}`);
@@ -176,6 +179,31 @@ var boardApp = (function(){
         }
     }
     
+    function getUsername(){
+        return new Promise((resolve, reject) => {
+            $.get("/api/tanks/username", function(data) {
+                username = data;
+                console.log(username);
+                resolve();
+            }).fail(function() {
+                alert("There is no user with that name");
+                reject();
+            });
+        });
+    }
+
+    function getTank(){
+        return new Promise((resolve, reject) => {
+            $.get(`/api/tanks/${username}`, function(tank) {
+                userTank = tank; 
+                console.log(userTank);
+                resolve();
+            }).fail(function() {
+                alert("There is no user with that name");
+                reject();
+            });
+        });
+    }
 
     document.addEventListener('keydown', (e) => {
         switch(e.key) {
@@ -194,29 +222,27 @@ var boardApp = (function(){
         }
     });
 
+    var subscribe = function(){
+        console.info('Connecting to WS...');
+        var socket = new SockJS('/stompendpoint');
+        stompClient = Stomp.over(socket);
+        stompClient.connect({}, function (frame) {
+            console.log('Connected: ' + frame);
+            stompClient.subscribe('/topic/matches/1/init', function (eventbody) {
+
+            },);
+        });
+    }
 
     return {
         init: function() {
-            initializeGame();
+            initializeBoard();
+            getUsername()
+                .then(() => getTank())
+                .then(() => subscribe())
+                .then(() => getTanks())
+                .then(() => placeTanks());
+            
         }
     }
 })();
-
-
-
-// setInterval(async () => {
-//     try {
-//         const response = await fetch("/api/tanks");
-//         const allTanks = await response.json();
-//         allTanks.forEach(tank => {
-//             if (!tanks.has(tank.id)) {
-//                 tanks.set(tank.id, tank);
-//                 placeTank(tank);
-//             } else {
-//                 updateTankPosition(tank);
-//             }
-//         });
-//     } catch (error) {
-//         console.error('Error updating tanks:', error);
-//     }
-// }, 1000);

@@ -42,7 +42,7 @@ var lobbyApp = (function () {
         return new Promise((resolve, reject) => {
             stompClient.connect({}, function (frame) {
                 console.log('Connected: ' + frame);
-                stompClient.subscribe(`/topic/matches/1`, function (eventbody) {
+                stompClient.subscribe(`/topic/lobby/1`, function (eventbody) {
                     loadTanks().then((tanks) => {
                         // Este código se ejecuta una vez que loadTanks se complete
                         if (tankList.length >= 3) {
@@ -71,7 +71,7 @@ var lobbyApp = (function () {
     };
 
     var connect = function() {
-        stompClient.send("/topic/matches/1", {}, JSON.stringify(username));
+        stompClient.send("/topic/lobby/1", {}, JSON.stringify(username));
     }
 
     return {

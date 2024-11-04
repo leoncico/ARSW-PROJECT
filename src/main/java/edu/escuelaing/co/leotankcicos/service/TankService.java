@@ -16,17 +16,20 @@ public class TankService {
     private Queue<String> defaultColors = new LinkedList<>();
 
     private TankRepository tankRepository;
+    private Board board;
 
     @Autowired
-    public TankService(TankRepository tankRepository){
+    public TankService(TankRepository tankRepository, Board board){
         this.tankRepository = tankRepository;
+        this.board = board;
         initialConfig();
     }
 
     private void initialConfig(){
-        defaultPositions.add(new int[]{1,13});
-        defaultPositions.add(new int[]{8,1});
-        defaultPositions.add(new int[]{8,13});
+        
+        defaultPositions.add(new int[]{1,8});
+        defaultPositions.add(new int[]{13,8});
+        defaultPositions.add(new int[]{13,1});
         defaultPositions.add(new int[]{1,1});
 
         defaultColors.add("#a569bd");
@@ -35,7 +38,11 @@ public class TankService {
         defaultColors.add("#1e8449");
     }
 
-    public Tank saveTank(String name) {
+    public Tank saveTank(String name) throws Exception {
+        if(tankRepository.findById(name).isPresent()){
+            throw new Exception("Tank with this name already exists");
+        }
+
         int[] position = defaultPositions.poll();
         Tank newTank = new Tank(position[0], position[1], defaultColors.poll(), 0, name);
         tankRepository.save(newTank);
@@ -51,7 +58,6 @@ public class TankService {
         if(tankRepository.findById(username).isPresent()){
             tank = tankRepository.findById(username).get(); 
         }
-        System.out.println(tank.toString());
         return tank;
     }
 
@@ -60,5 +66,9 @@ public class TankService {
         tank.setPosy(posY);
         tankRepository.save(tank);
         return tank;
+    }
+
+    public String[][] getBoard() {
+        return board.getBoxes();
     }
 }
