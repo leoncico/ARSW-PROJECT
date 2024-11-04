@@ -47,11 +47,11 @@ public class Board {
     }
 
     public void putTank(String username, int x, int y){
-        boxes[x][y] = username;
+        boxes[y][x] = username;
     }
 
     public void clearBox(int x, int y){
-        boxes[x][y] = null;
+        boxes[x][y] = "0";
     }
 
     public String[][] getBoxes(){

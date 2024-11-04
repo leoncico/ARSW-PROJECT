@@ -59,7 +59,7 @@ var boardApp = (function(){
         tanks.forEach((data) => {
             const tankElement = document.createElement('div');
             tankElement.className = 'tank';
-            tankElement.id = `tank-${data.id}`;
+            tankElement.id = `tank-${data.name}`;
             tankElement.style.backgroundColor = data.color;
             const cellIndex = data.posy * COLS + data.posx;
             cells[cellIndex].appendChild(tankElement);
@@ -105,10 +105,13 @@ var boardApp = (function(){
                     newPosY: newPosY
                 }),
                 success: function(updatedTank) {
+                    userTank = updatedTank;
                     tanks.set(updatedTank.name, updatedTank);
+                    gameBoard[y][x] = '0';  // Clear old position
+                    gameBoard[newPosY][newPosX] = updatedTank.name;
                     updateTankPosition(updatedTank);
                     console.log('x:'+ x + 'y' + y);
-                    console.log('x:'+ newPosX + 'y' + newPosX);
+                    console.log('nuevox:'+ newPosX + 'nuievoy' + newPosY);
                 },
                 error: function(jqXHR) {
                     if (jqXHR.status === 409) {
@@ -122,7 +125,6 @@ var boardApp = (function(){
         } catch (error) {
             console.error('Error moving tank:', error);
         }
-
     }
 
     function updateTankPosition(updatedTank) {
@@ -131,7 +133,8 @@ var boardApp = (function(){
             const cells = document.getElementsByClassName('cell');
             const newCellIndex = updatedTank.posy * COLS + updatedTank.posx;
             cells[newCellIndex].appendChild(tankElement);
-            rotateTank(updatedTank.id, updatedTank.rotation);
+            rotateTank(updatedTank.name, updatedTank.rotation);
+            console.log('todo good');
         }
     }
     
@@ -140,6 +143,7 @@ var boardApp = (function(){
         if (tank) {
             tank.style.transform = `translate(-50%, -50%) rotate(${degrees}deg)`;
         }
+        console.log('todo bien');
     }
     
     function getUsername(){

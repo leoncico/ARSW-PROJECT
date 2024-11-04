@@ -58,27 +58,29 @@ public class TankController {
     }
 
     // Mover tanque 
-    @PutMapping("/{username}/move")  
+    @PutMapping("/{username}/move")
     public ResponseEntity<Tank> moveTank(@PathVariable String username, @RequestBody Map<String, Integer> moveRequest) {
         Tank tank = tankService.getTankById(username);
-        if (tank != null) {
-            Integer posX = moveRequest.get("posX");
-            Integer posY = moveRequest.get("posY");
-            Integer newPosX = moveRequest.get("newPosX");
-            Integer newPosY = moveRequest.get("newPosY");
-
-            Tank updatedTank;
-            try {
-                updatedTank = tankService.updateTankPosition(tank, posX, posY, newPosX, newPosY);
-                System.out.println(updatedTank.getPosx());
-                System.out.println(updatedTank.getPosy());
-                return new ResponseEntity<>(updatedTank, HttpStatus.OK);
-            } catch (Exception e) {
-                return new ResponseEntity<>(HttpStatus.CONFLICT);
-            }
-            
-        } else {
+        if (tank == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        Integer posX = moveRequest.get("posX");
+        Integer posY = moveRequest.get("posY");
+        Integer newPosX = moveRequest.get("newPosX");
+        Integer newPosY = moveRequest.get("newPosY");
+
+        // Validate current position matches
+        if (!(tank.getPosx() == posX) || !(tank.getPosy() ==posY)) {
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
+        }
+
+        try {
+            // Update position and validate in service layer
+            tank = tankService.updateTankPosition(tank, posX, posY, newPosX, newPosY);
+            return new ResponseEntity<>(tank, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
     }
 

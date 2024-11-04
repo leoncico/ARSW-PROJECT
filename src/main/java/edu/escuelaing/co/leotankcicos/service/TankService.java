@@ -63,22 +63,35 @@ public class TankService {
 
     public Tank updateTankPosition(Tank tank, int x, int y, int newX, int newY) throws Exception { 
         String[][] boxes = board.getBoxes();
-        String box = boxes[newX][newY];
+        String box = boxes[newY][newX];
         synchronized(box){
             if(box.equals("0")){
+                System.out.println("initialx" + tank.getPosx() + "initialy" + tank.getPosy());
                 board.putTank(tank.getName(), newX, newY);
-                board.clearBox(x, y);
+                board.clearBox(y, x);
                 tank.setPosx(newX);
-                tank.setPosy(newX);
+                tank.setPosy(newY);
                 tankRepository.save(tank);
-            }
-            else{
-                throw new Exception("This box is already occupied");
+                boxes = board.getBoxes();
+                printBoard(boxes);
+                System.out.println("siiiiiiiiiiiiiiiiiiix" + tank.getPosx() + "aaay" + tank.getPosy());
+            }else{
+                System.out.println("This box is already occupied by:" + box);
+                throw new Exception("This box is already occupied" + box);
             }
         }
         
         return tank;
     }
+    public void printBoard(String [][] boxes) {
+        for (String[] row : boxes) {
+            for (String cell : row) {
+                System.out.print(cell + " ");
+            }
+            System.out.println();
+        }
+    }
+
 
     public void moveTank(){
 
