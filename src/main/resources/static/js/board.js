@@ -66,12 +66,6 @@ var boardApp = (function(){
         tanks.forEach((value, key) => {
             gameBoard[value.posy][value.posx] = value.name;
         });
-
-        console.log("=============================");
-        console.log(tanks);
-        console.log(gameBoard);
-        console.log("=============================");
-
         const cells = document.getElementsByClassName('cell');
         tanks.forEach((data) => {
             const tankElement = document.createElement('div');
@@ -217,119 +211,120 @@ var boardApp = (function(){
 
                 updateTankPosition(newTankState);
             });
+
+            stompClient.subscribe('/topic/matches/1/bullets', function (eventbody) {
+
+            });
         });
     }
 
-    // Configuración de balas
+    
     const BULLET_SPEED = 1;
     const BULLET_SIZE = 9;
     const CELL_SIZE = 40;
 
     let bullets = new Map();
 
-    async function shoot() {
-        if (!currentTankId) return;
+    function shoot() {
+        if (!userTank) return;
 
-        const currentTank = tanks.get(currentTankId);
-        if (!currentTank) return;
-
-        try {
-            const response = await fetch(`${API_URL}/${currentTankId}/shoot`, {
-                method: 'POST'
-            });
-            if (response.ok) {
-                const bullet = await response.json();
+        $.ajax({
+            url: `/api/tanks/${userTank.name}/shoot`,
+            type: "POST",
+            contentType: "application/json",
+            success: function(response){
+                const bullet = response.json();
                 bullets.set(bullet.id, bullet);
                 createBulletElement(bullet);
+            },
+            error: function(){
+                console.error('Error shooting:', error);
             }
-        } catch (error) {
-            console.error('Error shooting:', error);
-        }
+        });
     }
 
-     function createBulletElement(bullet) {
-         removeBulletElement(bullet.id);
+    function createBulletElement(bullet) {
+        removeBulletElement(bullet.id);
 
-         const bulletElement = document.createElement('div');
-         bulletElement.className = 'bullet';
-         bulletElement.id = `bullet-${bullet.id}`;
+        const bulletElement = document.createElement('div');
+        bulletElement.className = 'bullet';
+        bulletElement.id = `bullet-${bullet.id}`;
 
-         // Calcular la posición inicial exacta
+        // Calcular la posición inicial exacta
         const x = bullet.x + (CELL_SIZE / 2);
         const y = bullet.y+ (CELL_SIZE / 2);
 
-         bulletElement.style.cssText = `
-             position: absolute;
-             width: ${BULLET_SIZE}px;
-             height: ${BULLET_SIZE}px;
-             background-color: #FF0000;
-             border-radius: 50%;
-             left: ${x}px;
-             top: ${y}px;
-             transform: translate(-50%, -50%);
-             transition: all 0.05s linear;
-             z-index: 100;
-         `;
+        bulletElement.style.cssText = `
+            position: absolute;
+            width: ${BULLET_SIZE}px;
+            height: ${BULLET_SIZE}px;
+            background-color: #FF0000;
+            border-radius: 50%;
+            left: ${x}px;
+            top: ${y}px;
+            transform: translate(-50%, -50%);
+            transition: all 0.05s linear;
+            z-index: 100;
+        `;
 
-          const cells = document.getElementsByClassName('cell');
-             const cellIndex = bullet.y * COLS + bullet.x;
+        const cells = document.getElementsByClassName('cell');
+        const cellIndex = bullet.y * COLS + bullet.x;
 
-             console.log("inicialy:", bullet.y, "inicialx:", bullet.x);
-             if (cellIndex < 0 || cellIndex >= cells.length) {
-                 console.error("Índice de celda fuera de los límites:", cellIndex);
-                 return;
-             }
-             cells[cellIndex].appendChild(bulletElement);
+        console.log("inicialy:", bullet.y, "inicialx:", bullet.x);
+        if (cellIndex < 0 || cellIndex >= cells.length) {
+            console.error("Índice de celda fuera de los límites:", cellIndex);
+            return;
+        }
+        cells[cellIndex].appendChild(bulletElement);
+        trackBulletPosition(bullet);
+    }
 
-         trackBulletPosition(bullet);
-     }
 
+    function trackBulletPosition(bullet) {
+        let bulletId = bullet.id;
+        let attempts = 0;
+        const MAX_ATTEMPTS = 50;
 
-     function trackBulletPosition(bullet) {
-         let bulletId = bullet.id;
-         let attempts = 0;
-         const MAX_ATTEMPTS = 50; // Límite de actualizaciones para evitar bucles infinitos
+        const updateInterval = setInterval(async () => {
+            if (attempts >= MAX_ATTEMPTS) {
+                console.log("Máximo de intentos alcanzado, deteniendo la bala");
+                clearInterval(updateInterval);
+                removeBulletElement(bulletId);
+                bullets.delete(bulletId);
+                return;
+            }
 
-         const updateInterval = setInterval(async () => {
-             if (attempts >= MAX_ATTEMPTS) {
-                 console.log("Máximo de intentos alcanzado, deteniendo la bala");
-                 clearInterval(updateInterval);
-                 removeBulletElement(bulletId);
-                 bullets.delete(bulletId);
-                 return;
-             }
+            try {
+                const response = await fetch(`${API_URL}/bullets/${bulletId}/position`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
 
-             try {
-                 const response = await fetch(`${API_URL}/bullets/${bulletId}/position`);
-                 if (!response.ok) {
-                     throw new Error(`HTTP error! status: ${response.status}`);
-                 }
+                const bulletData = await response.json();
 
-                 const bulletData = await response.json();
-
-                 if (bulletData.alive) {
-                     updateBulletPosition(bulletData);
-                     console.log("Actualizando posición de la bala #",bulletData.id,"...", bulletData.x, bulletData.y);
-                     attempts++;
-                 } else {
-                     console.log("La bala ha impactado o salió del mapa");
-                     clearInterval(updateInterval);
-                     createExplosionEffect(bulletData.x, bulletData.y);
-                     removeBulletElement(bulletId);
-                     bullets.delete(bulletId);
-                     return;
-                 }
-             } catch (error) {
-                 console.error('Error tracking bullet:', error);
-                 clearInterval(updateInterval);
-                 removeBulletElement(bulletId);
-                 bullets.delete(bulletId);
-             }
-         }, 1000); // Actualización más frecuente para movimiento más suave
-     }
+                if (bulletData.alive) {
+                    updateBulletPosition(bulletData);
+                    console.log("Actualizando posición de la bala #",bulletData.id,"...", bulletData.x, bulletData.y);
+                    attempts++;
+                } else {
+                    console.log("La bala ha impactado o salió del mapa");
+                    clearInterval(updateInterval);
+                    createExplosionEffect(bulletData.x, bulletData.y);
+                    removeBulletElement(bulletId);
+                    bullets.delete(bulletId);
+                    return;
+                }
+            } catch (error) {
+                console.error('Error tracking bullet:', error);
+                clearInterval(updateInterval);
+                removeBulletElement(bulletId);
+                bullets.delete(bulletId);
+            }
+        }, 1000); // Actualización más frecuente para movimiento más suave
+    }
 
     // Actualizar posición visual de la bala
-     function updateBulletPosition(bullet) {
+    function updateBulletPosition(bullet) {
         const bulletElement = document.getElementById(`bullet-${bullet.id}`);
         if (!bulletElement) return;
 
@@ -349,8 +344,6 @@ var boardApp = (function(){
         }
     }
 
-
-    
     // Remover elemento de la bala
      function removeBulletElement(bulletId) {
         const bulletElement = document.getElementById(`bullet-${bulletId}`);
