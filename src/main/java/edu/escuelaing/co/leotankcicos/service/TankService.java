@@ -5,13 +5,19 @@ import java.util.*;
 import edu.escuelaing.co.leotankcicos.model.Bullet;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import edu.escuelaing.co.leotankcicos.model.Tank;
 import edu.escuelaing.co.leotankcicos.repository.TankRepository;
 
 @Service
 public class TankService {
+
+    SimpMessagingTemplate msgt;
 
     private Queue<int[]> defaultPositions = new LinkedList<>();
     private Queue<String> defaultColors = new LinkedList<>();
@@ -20,14 +26,16 @@ public class TankService {
     private Map<Integer, Bullet> bullets;
     private int bulletId;
     private Board board;
-
+	
     private static final int MAX_PLAYERS = 3;
 
     @Autowired
-    public TankService(TankRepository tankRepository, Board board){
+    public TankService(TankRepository tankRepository, Board board, SimpMessagingTemplate msgt){
         this.tankRepository = tankRepository;
         this.board = board;
+        bullets = new HashMap<>();
         initialConfig();
+	    this.msgt = msgt;
     }
 
     private void initialConfig(){
@@ -105,6 +113,7 @@ public class TankService {
         if (tank == null) {
             return null;
         }
+
         Bullet bullet = new Bullet(
                 bulletId++,
                 tank.getPosx(),
@@ -123,7 +132,12 @@ public class TankService {
     }
 
     private void startBulletMovement(Bullet bullet) {
-        new Thread(() -> moveBullet(bullet)).start();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                moveBullet(bullet);
+            }
+        }).start();
     }
 
     private void moveBullet(Bullet bullet) {
@@ -199,16 +213,20 @@ public class TankService {
     }
 
     private void handleCollision(Bullet bullet, Tank tank) {
-        // Aquí puedes implementar la lógica de lo que sucede cuando una bala golpea un tanque
-        // Por ejemplo, reducir la vida del tanque, eliminarlo, etc.
-
-        // Actualizar el estado del tanque en la base de datos
-        tankRepository.save(tank);
-
-        // Actualizar el tablero
+        
+        tankRepository.delete(tank);
         board.clearBox(tank.getPosy(), tank.getPosx());
+        msgt.convertAndSend("/topic/matches/1/bullets", board.getBoxes());
 
         System.out.println("¡Colisión! Tanque " + tank.getName() + " ha sido golpeado");
+
+        // try {
+        //     // Convierte el tablero en JSON y envía a través de WebSocket
+        //     String boardJson = new ObjectMapper().writeValueAsString(board.getBoxes());
+        //     msgt.convertAndSend("/topic/matches/1/bullets", boardJson);
+        // } catch (Exception e) {
+        //     System.err.println("Error al convertir el tablero a JSON: " + e.getMessage());
+        // }
     }
 
     // Método auxiliar para actualizar el tablero después de mover la bala

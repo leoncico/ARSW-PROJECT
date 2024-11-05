@@ -183,6 +183,53 @@ var boardApp = (function(){
             .then(() => console.log(gameBoard));
     }
 
+    function updateTanksBoard() {
+        const board = document.getElementById('gameBoard');
+        const cells = board.getElementsByClassName('cell');
+    
+        // Limpiar el contenido de cada celda antes de redibujar
+        for (let cell of cells) {
+            cell.innerHTML = '';
+        }
+    
+        for (let y = 0; y < ROWS; y++) {
+            for (let x = 0; x < COLS; x++) {
+                const cellIndex = y * COLS + x;
+                const cell = cells[cellIndex];
+                
+                switch (gameBoard[y][x]) {
+                    case '1':  // Muro
+                        cell.classList.add('wall');
+                        break;
+                    
+                    case '0':  // Espacio vacío
+                        cell.classList.remove('wall');
+                        break;
+                    
+                    default:   // Tanque u otro objeto
+                        const tankId = gameBoard[y][x];
+                        const tankData = tanks.get(tankId);
+                        
+                        if (tankData) {
+                            // Crear el elemento del tanque
+                            const tankElement = document.createElement('div');
+                            tankElement.className = 'tank';
+                            tankElement.id = `tank-${tankId}`;
+                            tankElement.style.backgroundColor = tankData.color;
+    
+                            // Configurar rotación del tanque
+                            tankElement.style.transform = `translate(-50%, -50%) rotate(${tankData.rotation}deg)`;
+                            
+                            // Añadir el tanque a la celda correspondiente
+                            cell.appendChild(tankElement);
+                        }
+                        break;
+                }
+            }
+        }
+    }
+    
+
     document.addEventListener('keydown', (e) => {
         switch(e.key) {
             case 'a':
@@ -213,7 +260,18 @@ var boardApp = (function(){
             });
 
             stompClient.subscribe('/topic/matches/1/bullets', function (eventbody) {
+                gameBoard = JSON.parse(eventbody.body);
+                updateTanksBoard();
 
+                bullets.forEach((intervalId, bulletId) => {
+                    clearInterval(intervalId);  // Detener la animación de la bala si ya existe
+                    bullets.delete(bulletId);   // Eliminar de la lista de balas activas
+                });
+            
+                // Recorrer la nueva información de balas y animarlas nuevamente
+                gameBoard.bullets.forEach(bullet => {
+                    animateBullet(bullet.id, bullet.x, bullet.y, bullet.direction);
+                });
             });
         });
     }
@@ -226,21 +284,52 @@ var boardApp = (function(){
     let bullets = new Map();
 
     function shoot() {
-        if (!userTank) return;
+        stompClient.send(`/app/${username}/shoot`, {}, JSON.stringify());
+        const startX = userTank.posx;
+        const startY = userTank.posy;
+        const direction = userTank.rotation;
 
-        $.ajax({
-            url: `/api/tanks/${userTank.name}/shoot`,
-            type: "POST",
-            contentType: "application/json",
-            success: function(response){
-                const bullet = response.json();
-                bullets.set(bullet.id, bullet);
-                createBulletElement(bullet);
-            },
-            error: function(){
-                console.error('Error shooting:', error);
+        // Generar un ID temporal para la bala
+        const bulletId = `bullet-${Date.now()}`;
+
+        // Llamar a animateBullet para comenzar la animación
+        animateBullet(bulletId, startX, startY, direction);
+    }
+
+    function animateBullet(bulletId, startX, startY, direction) {
+        const board = document.getElementById('gameBoard');
+        const bulletElement = document.createElement('div');
+        bulletElement.className = 'bullet';
+        bulletElement.id = `bullet-${bulletId}`;
+        bulletElement.style.width = '9px';
+        bulletElement.style.height = '9px';
+        bulletElement.style.position = 'absolute';
+        bulletElement.style.left = `${startX * CELL_SIZE + CELL_SIZE / 2 - BULLET_SIZE / 2}px`;
+        bulletElement.style.top = `${startY * CELL_SIZE + CELL_SIZE / 2 - BULLET_SIZE / 2}px`;
+        board.appendChild(bulletElement);
+    
+        const intervalId = setInterval(() => {
+            // Actualiza la posición de la bala según la dirección
+            let currentX = parseInt(bulletElement.style.left) / CELL_SIZE;
+            let currentY = parseInt(bulletElement.style.top) / CELL_SIZE;
+    
+            switch (direction) {
+                case -90: currentY -= 1; break;   // Arriba
+                case 0:   currentX += 1; break;   // Derecha
+                case 90:  currentY += 1; break;   // Abajo
+                case 180: currentX -= 1; break;   // Izquierda
             }
-        });
+    
+            bulletElement.style.left = `${currentX * CELL_SIZE + CELL_SIZE / 2 - BULLET_SIZE / 2}px`;
+            bulletElement.style.top = `${currentY * CELL_SIZE + CELL_SIZE / 2 - BULLET_SIZE / 2}px`;
+    
+            // Condición para detener el movimiento (ej: si sale de los límites del tablero)
+            if (currentX < 0 || currentX >= COLS || currentY < 0 || currentY >= ROWS) {
+                clearInterval(intervalId);
+                bulletElement.remove();
+            }
+        }, 1000 / BULLET_SPEED); // Controla la velocidad de animación
+        bullets.set(bulletId, intervalId);
     }
 
     function createBulletElement(bullet) {
@@ -345,7 +434,7 @@ var boardApp = (function(){
     }
 
     // Remover elemento de la bala
-     function removeBulletElement(bulletId) {
+    function removeBulletElement(bulletId) {
         const bulletElement = document.getElementById(`bullet-${bulletId}`);
         if (bulletElement) {
             console.log("Eliminando elemento de la bala...");
@@ -393,7 +482,6 @@ var boardApp = (function(){
             getUsername()
                 .then(() => getBoard())
                 .then(() => initializeBoard())
-            
                 .then(() => getTank())
                 .then(() => getTanks())
                 .then(() => placeTanks())

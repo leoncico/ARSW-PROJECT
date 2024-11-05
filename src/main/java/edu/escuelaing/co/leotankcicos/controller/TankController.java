@@ -7,6 +7,8 @@ import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.handler.annotation.DestinationVariable;
+import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.web.bind.annotation.*;
 
 import edu.escuelaing.co.leotankcicos.model.Tank;
@@ -99,14 +101,14 @@ public class TankController {
         return new ResponseEntity<>(board, HttpStatus.OK);
     }
 
-    @PostMapping("/{username}/shoot")
-    public ResponseEntity<Bullet> shoot(@PathVariable String username) {
-            Bullet bullet = tankService.shoot(username);
-            if (bullet == null) {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-            }
-            return new ResponseEntity<>(bullet, HttpStatus.CREATED);
-    }
+    // @PostMapping("/{username}/shoot")
+    // public ResponseEntity<Bullet> shoot(@PathVariable String username) {
+    //         Bullet bullet = tankService.shoot(username);
+    //         if (bullet == null) {
+    //             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    //         }
+    //         return new ResponseEntity<>(bullet, HttpStatus.CREATED);
+    // }
 
     @GetMapping("/bullets/{bulletId}/position")
     public ResponseEntity<Bullet> getBulletPosition(@PathVariable int bulletId) {
@@ -117,6 +119,13 @@ public class TankController {
         return new ResponseEntity<>(bullet, HttpStatus.OK);
     }
 
-    
+
+    @MessageMapping("/{username}/shoot")
+    public void handleShootEvent(@DestinationVariable String username){
+        System.out.println("Bala recibida: ");
+        tankService.shoot(username);
+    }
+
+
 }
 
