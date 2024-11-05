@@ -259,22 +259,40 @@ var boardApp = (function(){
                 updateTankPosition(newTankState);
             });
 
+            stompClient.subscribe(`/topic/matches/1/bulletAnimation`, function(eventbody) {
+                const bulletData = JSON.parse(eventbody.body);
+                const bulletId = bulletData.bulletId;
+                const startX = bulletData.startX;
+                const startY = bulletData.startY;
+                const direction = bulletData.direction;
+                animateBullet(bulletId, startX, startY, direction);
+            });
+
             stompClient.subscribe('/topic/matches/1/bullets', function (eventbody) {
                 gameBoard = JSON.parse(eventbody.body);
                 updateTanksBoard();
+                
+            });
 
-                bullets.forEach((intervalId, bulletId) => {
-                    clearInterval(intervalId);  // Detener la animación de la bala si ya existe
-                    bullets.delete(bulletId);   // Eliminar de la lista de balas activas
+            stompClient.subscribe('/topic/matches/1/winner', function (message) {
+                const winner = JSON.parse(message.body);
+                displayWinner(winner);
                 });
             
-                // Recorrer la nueva información de balas y animarlas nuevamente
-                gameBoard.bullets.forEach(bullet => {
-                    animateBullet(bullet.id, bullet.x, bullet.y, bullet.direction);
-                });
-            });
         });
     }
+
+    
+        // Referencias al modal y sus elementos
+    const winnerModal = document.getElementById("winnerModal");
+    const winnerName = document.getElementById("winnerName");
+
+    // Función para mostrar el modal con el nombre del ganador
+    function displayWinner(winner) {
+        winnerName.textContent = `¡El ganador es ${winner.name}!`;
+        winnerModal.style.display = "block"; // Muestra el modal
+    }
+    
 
     
     const BULLET_SPEED = 1;
@@ -289,8 +307,13 @@ var boardApp = (function(){
         const startY = userTank.posy;
         const direction = userTank.rotation;
         const bulletId = `bullet-${Date.now()}`;
-        animateBullet(bulletId, startX, startY, direction);
-
+        const bulletData = {
+            bulletId: bulletId,
+            startX: startX,
+            startY: startY,
+            direction: direction
+        }
+        stompClient.send(`/topic/matches/1/bulletAnimation`, {}, JSON.stringify(bulletData));
     }
 
     function calculateBulletPosition(startX, startY, direction, progress) {
@@ -359,6 +382,9 @@ var boardApp = (function(){
                 clearInterval(intervalId);
                 bullets.delete(bulletId);
                 return;
+            }else if(cellContent!=='0'){
+                console.log("Pene de mico");
+                stompClient.send('/app/matches/1/winner', {}, JSON.stringify());
             }
 
             // Mover la bala a la nueva celda

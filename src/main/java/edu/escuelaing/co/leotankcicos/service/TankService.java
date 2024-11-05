@@ -220,6 +220,9 @@ public class TankService {
 
         System.out.println("¡Colisión! Tanque " + tank.getName() + " ha sido golpeado");
 
+        
+        
+
         // try {
         //     // Convierte el tablero en JSON y envía a través de WebSocket
         //     String boardJson = new ObjectMapper().writeValueAsString(board.getBoxes());
@@ -227,6 +230,13 @@ public class TankService {
         // } catch (Exception e) {
         //     System.err.println("Error al convertir el tablero a JSON: " + e.getMessage());
         // }
+    }
+
+    public  void handleWinner(){
+        Tank winner = checkVictory();
+        if(winner!=null){
+            announceVictory(winner);
+        }
     }
 
     // Método auxiliar para actualizar el tablero después de mover la bala
@@ -240,5 +250,19 @@ public class TankService {
 
     public String[][] getBoard() {
         return board.getBoxes();
+    }
+
+    private Tank checkVictory() {
+        List<Tank> activeTanks = tankRepository.findAll();
+        if (activeTanks.size() == 1) {
+            return activeTanks.get(0);
+        }
+    
+        return null;
+    }
+
+    private void announceVictory(Tank winner) {
+        System.out.println("¡El ganador es: " + winner.getName() + "!");
+        msgt.convertAndSend("/topic/matches/1/winner", winner.getName());
     }
 }

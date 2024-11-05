@@ -7,10 +7,17 @@
 </head>
 <body onload="boardApp.init()">
     <div class="game-container">
-
+        <div id="winnerModal" class="modal" style="display: none;">
+            <div class="modal-content">
+              <h2>¡Tenemos un ganador!</h2>
+              <p id="winnerName"></p>
+            </div>
+        </div>
         <div class="game-board" id="gameBoard"></div>
 
     </div>
+    
+
     <script src="js/board.js"></script>
     <script src="/webjars/jquery/3.7.1/jquery.min.js"></script>
     <script src="/webjars/sockjs-client/1.5.1/sockjs.min.js"></script>

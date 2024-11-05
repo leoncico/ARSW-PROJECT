@@ -1,16 +1,24 @@
 package edu.escuelaing.co.leotankcicos.controller;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 
-import edu.escuelaing.co.leotankcicos.model.Bullet;
-import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
+import edu.escuelaing.co.leotankcicos.model.Bullet;
 import edu.escuelaing.co.leotankcicos.model.Tank;
 import edu.escuelaing.co.leotankcicos.service.TankService;
 import jakarta.servlet.http.HttpSession;
@@ -123,6 +131,12 @@ public class TankController {
     public void handleShootEvent(@DestinationVariable String username){
         System.out.println("Bala recibida: ");
         tankService.shoot(username);
+    }
+
+    @MessageMapping("/matches/1/winner")
+    public void handleWinnerEvent(){
+        System.out.println("Ganador");
+        tankService.handleWinner();
     }
 
 
