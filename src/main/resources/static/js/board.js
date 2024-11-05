@@ -288,187 +288,106 @@ var boardApp = (function(){
         const startX = userTank.posx;
         const startY = userTank.posy;
         const direction = userTank.rotation;
-
-        // Generar un ID temporal para la bala
         const bulletId = `bullet-${Date.now()}`;
-
-        // Llamar a animateBullet para comenzar la animación
         animateBullet(bulletId, startX, startY, direction);
+
+    }
+
+    function calculateBulletPosition(startX, startY, direction, progress) {
+        const radians = (direction * Math.PI) / 180;
+        const x = startX * CELL_SIZE + Math.cos(radians) * progress;
+        const y = startY * CELL_SIZE + Math.sin(radians) * progress;
+        return { x, y };
     }
 
     function animateBullet(bulletId, startX, startY, direction) {
-        const board = document.getElementById('gameBoard');
-        const bulletElement = document.createElement('div');
-        bulletElement.className = 'bullet';
-        bulletElement.id = `bullet-${bulletId}`;
-        bulletElement.style.width = '9px';
-        bulletElement.style.height = '9px';
-        bulletElement.style.position = 'absolute';
-        bulletElement.style.left = `${startX * CELL_SIZE + CELL_SIZE / 2 - BULLET_SIZE / 2}px`;
-        bulletElement.style.top = `${startY * CELL_SIZE + CELL_SIZE / 2 - BULLET_SIZE / 2}px`;
-        board.appendChild(bulletElement);
-    
-        const intervalId = setInterval(() => {
-            // Actualiza la posición de la bala según la dirección
-            let currentX = parseInt(bulletElement.style.left) / CELL_SIZE;
-            let currentY = parseInt(bulletElement.style.top) / CELL_SIZE;
-    
-            switch (direction) {
-                case -90: currentY -= 1; break;   // Arriba
-                case 0:   currentX += 1; break;   // Derecha
-                case 90:  currentY += 1; break;   // Abajo
-                case 180: currentX -= 1; break;   // Izquierda
-            }
-    
-            bulletElement.style.left = `${currentX * CELL_SIZE + CELL_SIZE / 2 - BULLET_SIZE / 2}px`;
-            bulletElement.style.top = `${currentY * CELL_SIZE + CELL_SIZE / 2 - BULLET_SIZE / 2}px`;
-    
-            // Condición para detener el movimiento (ej: si sale de los límites del tablero)
-            if (currentX < 0 || currentX >= COLS || currentY < 0 || currentY >= ROWS) {
-                clearInterval(intervalId);
-                bulletElement.remove();
-            }
-        }, 1000 / BULLET_SPEED); // Controla la velocidad de animación
-        bullets.set(bulletId, intervalId);
-    }
+        // Crear el elemento de la bala
+        const bullet = document.createElement('div');
+        bullet.className = 'bullet';
+        bullet.id = `bullet-${bulletId}`;
 
-    function createBulletElement(bullet) {
-        removeBulletElement(bullet.id);
-
-        const bulletElement = document.createElement('div');
-        bulletElement.className = 'bullet';
-        bulletElement.id = `bullet-${bullet.id}`;
-
-        // Calcular la posición inicial exacta
-        const x = bullet.x + (CELL_SIZE / 2);
-        const y = bullet.y+ (CELL_SIZE / 2);
-
-        bulletElement.style.cssText = `
-            position: absolute;
-            width: ${BULLET_SIZE}px;
-            height: ${BULLET_SIZE}px;
-            background-color: #FF0000;
-            border-radius: 50%;
-            left: ${x}px;
-            top: ${y}px;
-            transform: translate(-50%, -50%);
-            transition: all 0.05s linear;
-            z-index: 100;
-        `;
-
+        // Obtener las celdas del tablero
         const cells = document.getElementsByClassName('cell');
-        const cellIndex = bullet.y * COLS + bullet.x;
+        let currentX = startX;
+        let currentY = startY;
 
-        console.log("inicialy:", bullet.y, "inicialx:", bullet.x);
-        if (cellIndex < 0 || cellIndex >= cells.length) {
-            console.error("Índice de celda fuera de los límites:", cellIndex);
+        // Colocar la bala en la posición inicial
+        const initialCellIndex = currentY * COLS + currentX;
+        if (initialCellIndex < 0 || initialCellIndex >= cells.length) {
+            console.error("Posición inicial fuera de los límites:", initialCellIndex);
             return;
         }
-        cells[cellIndex].appendChild(bulletElement);
-        trackBulletPosition(bullet);
-    }
+        cells[initialCellIndex].appendChild(bullet);
 
+        // Calcular los incrementos basados en la dirección
+        let dx = 0, dy = 0;
+        switch (direction) {
+            case 0: // Derecha
+                dx = 1;
+                break;
+            case 90: // Abajo
+                dy = 1;
+                break;
+            case 180: // Izquierda
+                dx = -1;
+                break;
+            case -90: // Arriba
+                dy = -1;
+                break;
+        }
 
-    function trackBulletPosition(bullet) {
-        let bulletId = bullet.id;
-        let attempts = 0;
-        const MAX_ATTEMPTS = 50;
+        const intervalId = setInterval(() => {
+            // Remover la bala de la celda actual
+            bullet.remove();
 
-        const updateInterval = setInterval(async () => {
-            if (attempts >= MAX_ATTEMPTS) {
-                console.log("Máximo de intentos alcanzado, deteniendo la bala");
-                clearInterval(updateInterval);
-                removeBulletElement(bulletId);
+            // Calcular nueva posición
+            currentX += dx;
+            currentY += dy;
+
+            // Verificar si la bala está dentro de los límites
+            if (currentX < 0 || currentX >= COLS || currentY < 0 || currentY >= ROWS) {
+                clearInterval(intervalId);
                 bullets.delete(bulletId);
                 return;
             }
 
-            try {
-                const response = await fetch(`${API_URL}/bullets/${bulletId}/position`);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
+            const newCellIndex = currentY * COLS + currentX;
 
-                const bulletData = await response.json();
-
-                if (bulletData.alive) {
-                    updateBulletPosition(bulletData);
-                    console.log("Actualizando posición de la bala #",bulletData.id,"...", bulletData.x, bulletData.y);
-                    attempts++;
-                } else {
-                    console.log("La bala ha impactado o salió del mapa");
-                    clearInterval(updateInterval);
-                    createExplosionEffect(bulletData.x, bulletData.y);
-                    removeBulletElement(bulletId);
-                    bullets.delete(bulletId);
-                    return;
-                }
-            } catch (error) {
-                console.error('Error tracking bullet:', error);
-                clearInterval(updateInterval);
-                removeBulletElement(bulletId);
+            // Verificar si hay una pared o un tanque en la nueva posición
+            const cellContent = gameBoard[currentY][currentX];
+            if (cellContent === '1') { // Si hay una pared
+                clearInterval(intervalId);
                 bullets.delete(bulletId);
-            }
-        }, 1000); // Actualización más frecuente para movimiento más suave
-    }
-
-    // Actualizar posición visual de la bala
-    function updateBulletPosition(bullet) {
-        const bulletElement = document.getElementById(`bullet-${bullet.id}`);
-        if (!bulletElement) return;
-
-        if (gameBoard[bullet.y] && gameBoard[bullet.y][bullet.x] === 0) {
-            if (bulletElement) {
-                    const cells = document.getElementsByClassName('cell');
-                    const newCellIndex = bullet.y * COLS + bullet.x;
-                    cells[newCellIndex].appendChild(bulletElement);
+                return;
             }
 
-        }else {
-            console.error("La bala ha salido del tablero:", bullet);
-            bullet.alive = false;
-            removeBulletElement(bullet.id);
-            bullets.delete(bullet.id);
-            return;
-        }
+            // Mover la bala a la nueva celda
+            cells[newCellIndex].appendChild(bullet);
+        }, 1000); // Ajusta este valor para cambiar la velocidad de la bala
+
+        bullets.set(bulletId, intervalId);
     }
 
-    // Remover elemento de la bala
-    function removeBulletElement(bulletId) {
-        const bulletElement = document.getElementById(`bullet-${bulletId}`);
-        if (bulletElement) {
-            console.log("Eliminando elemento de la bala...");
-            bulletElement.remove();
-        }
-    }
-
-    // Efecto de explosión mejorado
-    function createExplosionEffect(x, y) {
-        const explosion = document.createElement('div');
-        explosion.className = 'explosion';
-
-        const pixelX = x * CELL_SIZE + CELL_SIZE / 2;
-        const pixelY = y * CELL_SIZE + CELL_SIZE / 2;
-
-        explosion.style.cssText = `
-            position: absolute;
-            left: ${pixelX}px;
-            top: ${pixelY}px;
-            width: 20px;
-            height: 20px;
-            background-color: #FFA500;
+    const styles = document.createElement('style');
+    styles.textContent = `
+        .bullet {
+            width: 10px;
+            height: 10px;
+            background-color: #ff0000;
             border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
             transform: translate(-50%, -50%);
-            animation: explode 0.3s ease-out forwards;
-            z-index: 101;
-        `;
+            z-index: 100;
+        }
 
-        const board = document.getElementById('gameBoard');
-        board.appendChild(explosion);
+        .cell {
+            position: relative;
+        }
+    `;
+    document.head.appendChild(styles);
 
-        // Remover el efecto después de la animación
-        setTimeout(() => explosion.remove(), 300);
-    }
 
     // Agregar evento de disparo (tecla espaciadora)
     document.addEventListener('keydown', (e) => {

@@ -119,7 +119,6 @@ public class TankController {
         return new ResponseEntity<>(bullet, HttpStatus.OK);
     }
 
-
     @MessageMapping("/{username}/shoot")
     public void handleShootEvent(@DestinationVariable String username){
         System.out.println("Bala recibida: ");
