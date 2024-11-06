@@ -210,10 +210,7 @@ public class TankService {
         tankRepository.delete(tank);
         board.clearBox(tank.getPosy(), tank.getPosx());
         msgt.convertAndSend("/topic/matches/1/bullets", board.getBoxes());
-
-            msgt.convertAndSend("/topic/matches/1/collisionResult", tank);
-            System.out.println("Resultado de la colisión en JSON: " + tank);
-
+        msgt.convertAndSend("/topic/matches/1/collisionResult", tank);
         System.out.println("¡Colisión! Tanque " + tank.getName() + " ha sido golpeado");
     }
 
@@ -247,6 +244,5 @@ public class TankService {
         //board.clearBoard();
         bullets.clear();
         initialConfig();
-        System.out.println("c reinicio pero en back");
     }
 }

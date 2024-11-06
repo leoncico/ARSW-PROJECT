@@ -11,7 +11,6 @@ var boardApp = (function(){
     function initializeBoard() {
         const board = document.getElementById('gameBoard');
         board.innerHTML = '';
-
         for (let y = 0; y < ROWS; y++) {
             for (let x = 0; x < COLS; x++) {
                 const cell = document.createElement('div');
@@ -25,6 +24,7 @@ var boardApp = (function(){
     }
     
     function getBoard(){
+        gameBoard = [];
         return new Promise ((resolve, reject) => {
             $.get("/api/tanks/board", function(data) {
                 gameBoard = data;
@@ -134,7 +134,7 @@ var boardApp = (function(){
             },
             error: function(jqXHR) {
                 if (jqXHR.status === 409) {
-                    alert('Movimiento no permitido: colisión detectada en el servidor.');
+                    console.error('Movimiento no permitido: colisión detectada en el servidor.');
                 } else {
                     console.error('Error al mover el tanque:', jqXHR.statusText);
                 }
@@ -180,7 +180,6 @@ var boardApp = (function(){
             .then(() => {
                 stompClient.send('/topic/matches/1/movement', {}, JSON.stringify(username));
             })
-            .then(() => console.log(gameBoard));
     }
 
     function updateTanksBoard() {
@@ -265,7 +264,8 @@ var boardApp = (function(){
                 const startX = bulletData.startX;
                 const startY = bulletData.startY;
                 const direction = bulletData.direction;
-                animateBullet(bulletId, startX, startY, direction);
+                const tankId = bulletData.tankId;
+                animateBullet(bulletId, startX, startY, direction, tankId);
             });
 
             stompClient.subscribe('/topic/matches/1/bullets', function (eventbody) {
@@ -289,8 +289,6 @@ var boardApp = (function(){
         });
     }
 
-    
-        // Referencias al modal y sus elementos
     const winnerModal = document.getElementById("winnerModal");
     const winnerName = document.getElementById("winnerName");
 
@@ -301,12 +299,6 @@ var boardApp = (function(){
         resetAfterWin();
     }
     
-
-    
-    const BULLET_SPEED = 1;
-    const BULLET_SIZE = 9;
-    const CELL_SIZE = 40;
-
     let bullets = new Map();
 
     function shoot() {
@@ -319,12 +311,13 @@ var boardApp = (function(){
             bulletId: bulletId,
             startX: startX,
             startY: startY,
-            direction: direction
+            direction: direction,
+            tankId: username
         }
         stompClient.send(`/topic/matches/1/bulletAnimation`, {}, JSON.stringify(bulletData));
     }
 
-    function animateBullet(bulletId, startX, startY, direction) {
+    function animateBullet(bulletId, startX, startY, direction, tankId) {
         // Crear el elemento de la bala
         const bullet = document.createElement('div');
         bullet.className = 'bullet';
@@ -377,14 +370,12 @@ var boardApp = (function(){
                 bullets.delete(bulletId);
                 return;
             }
-            else if(cellContent !== '0'){
-                console.log("PEGOOOO");
+            else if(cellContent !== '0' && tankId !== username){
                 clearInterval(intervalId);
                 bullets.delete(bulletId);
             }
 
             if(tanks.size <= 1){
-                console.log("Pene de mico");
                 stompClient.send('/app/matches/1/winner', {}, JSON.stringify());
             }
 
@@ -398,23 +389,19 @@ var boardApp = (function(){
         return new Promise((resolve, reject) => {
             setTimeout(() => {
                 $.get('/api/tanks/matches/1/reset', function() {
-                    // Resetea la parte visual una vez que se confirma el reinicio en el backend
                     resetFront();
-        
-                    console.log("Se reinició correctamente.");
-                    resolve(); // Resolver la promesa aquí
+                    resolve();
                 }).fail(function() {
                     alert("Fallo al reiniciar en el backend");
                     reject(new Error("Failed to reset"));
                 });
-            }, 10000); // Espera 10 segundos antes de iniciar el reinicio
+            }, 10000);
         });
     }
 
     function resetAfterWin() {
         resetPromise()
             .then(() => {
-                
                 window.location.href = "index.html";
             })
             .catch(error => {
@@ -424,23 +411,18 @@ var boardApp = (function(){
 
 
     function resetFront() {
-        // const tablero = document.getElementById('gameBoard');
-        // if (tablero) {
-        //     tablero.innerHTML = '';
-        // }
-        tanks = new Map();  
+        tanks = new Map(); 
         gameBoard = null;   
         username = null;  
         userTank = null; 
-    
+        bullets = new Map();
+
         if (stompClient && stompClient.connected) {
             stompClient.disconnect(() => {
                 console.log("Cliente WebSocket desconectado.");
                 stompClient = null;
             });
         }
-    
-        console.log("Reiniciao");
     }
 
     const styles = document.createElement('style');
@@ -475,7 +457,6 @@ var boardApp = (function(){
         init: function() {
             getUsername()
                 .then(() => getBoard())
-                .then(()=> console.log(gameBoard))
                 .then(() => initializeBoard())
                 .then(() => getTank())
                 .then(() => getTanks())

@@ -120,7 +120,6 @@ public class TankController {
 
     @MessageMapping("/{username}/shoot")
     public void handleShootEvent(@DestinationVariable String username){
-        System.out.println("Bala recibida: ");
         tankService.shoot(username);
     }
 
@@ -132,7 +131,6 @@ public class TankController {
     @GetMapping("/matches/1/reset")
     public ResponseEntity<String> resetGame(){
         tankService.reset();
-        System.out.println("c reinicio pero en controller");
         return new ResponseEntity<>("OK", HttpStatus.OK);
     }
 
