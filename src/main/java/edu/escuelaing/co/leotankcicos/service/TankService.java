@@ -1,6 +1,8 @@
 package edu.escuelaing.co.leotankcicos.service;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import edu.escuelaing.co.leotankcicos.model.Board;
 import edu.escuelaing.co.leotankcicos.model.Bullet;
@@ -20,17 +22,20 @@ public class TankService {
     private Queue<String> defaultColors = new LinkedList<>();
 
     private TankRepository tankRepository;
-    private Map<Integer, Bullet> bullets;
-    private int bulletId;
     private Board board;
 
+    private final Object bulletLock = new Object();
     private static final int MAX_PLAYERS = 3;
+
+    private final AtomicInteger bulletId;
+    private final ConcurrentHashMap<Integer, Bullet> bullets;
 
     @Autowired
     public TankService(TankRepository tankRepository, Board board, SimpMessagingTemplate msgt) {
         this.tankRepository = tankRepository;
         this.board = board;
-        bullets = new HashMap<>();
+        bullets = new ConcurrentHashMap<>();
+        bulletId = new AtomicInteger(0);
         initialConfig();
         this.msgt = msgt;
     }
@@ -78,7 +83,7 @@ public class TankService {
     public Tank updateTankPosition(Tank tank, int x, int y, int newX, int newY, int rotation) throws Exception {
         String[][] boxes = board.getBoxes();
         String box = boxes[newY][newX];
-        synchronized (box) {
+        synchronized (board.getLock(newX, newY)) {
             if (box.equals("0")) {
                 board.putTank(tank.getName(), newX, newY);
                 board.clearBox(y, x);
@@ -88,11 +93,11 @@ public class TankService {
                 tankRepository.save(tank);
                 boxes = board.getBoxes();
             } else {
-                System.out.println("This box is already occupied by:" + box);
-                throw new Exception("This box is already occupied" + box);
+                System.out.println("This box is already occupied by: " + box);
+                throw new Exception("This box is already occupied by: " + box);
             }
         }
-
+    
         return tank;
     }
 
@@ -106,20 +111,23 @@ public class TankService {
     }
 
     public Bullet shoot(String username) {
-        Tank tank = tankRepository.findById(username).get();
+        Tank tank = tankRepository.findById(username).orElse(null);
         if (tank == null) {
             return null;
         }
-
-        Bullet bullet = new Bullet(
-                bulletId++,
-                tank.getPosx(),
-                tank.getPosy(),
-                tank.getRotation(),
-                true,
-                username
-        );
-        bullets.put(bullet.getId(), bullet);
+    
+        Bullet bullet;
+        synchronized (bulletLock) {
+            bullet = new Bullet(
+                    bulletId.getAndIncrement(),                
+                    tank.getPosx(),
+                    tank.getPosy(),
+                    tank.getRotation(),
+                    true,
+                    username
+            );
+            bullets.put(bullet.getId(), bullet);
+        }
         startBulletMovement(bullet);
         return bullet;
     }
@@ -194,7 +202,11 @@ public class TankService {
 
     private boolean isOutOfBounds(int x, int y) {
         String[][] boxes = board.getBoxes();
-        return x < 0 || x >= boxes[0].length || y < 0 || y >= boxes.length;
+        boolean flag = false;
+        if( x < 0 || x >= boxes[0].length || y < 0 || y >= boxes.length || boxes[y][x].equals("1")){
+            flag=true;
+        }
+        return flag;
     }
 
     private boolean checkCollision(Bullet bullet, Tank tank) {
@@ -217,7 +229,7 @@ public class TankService {
         }
     }
 
-    public void handleWinner() {
+    public synchronized void handleWinner() {
         Tank winner = checkVictory();
         if (winner != null) {
             announceVictory(winner);
