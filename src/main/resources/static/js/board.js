@@ -323,13 +323,6 @@ var boardApp = (function(){
         stompClient.send(`/topic/matches/1/bulletAnimation`, {}, JSON.stringify(bulletData));
     }
 
-    function calculateBulletPosition(startX, startY, direction, progress) {
-        const radians = (direction * Math.PI) / 180;
-        const x = startX * CELL_SIZE + Math.cos(radians) * progress;
-        const y = startY * CELL_SIZE + Math.sin(radians) * progress;
-        return { x, y };
-    }
-
     function animateBullet(bulletId, startX, startY, direction) {
         // Crear el elemento de la bala
         const bullet = document.createElement('div');
@@ -349,7 +342,6 @@ var boardApp = (function(){
         }
         cells[initialCellIndex].appendChild(bullet);
 
-        // Calcular los incrementos basados en la dirección
         let dx = 0, dy = 0;
         switch (direction) {
             case 0: // Derecha
@@ -367,14 +359,10 @@ var boardApp = (function(){
         }
 
         const intervalId = setInterval(() => {
-            // Remover la bala de la celda actual
             bullet.remove();
-
-            // Calcular nueva posición
             currentX += dx;
             currentY += dy;
 
-            // Verificar si la bala está dentro de los límites
             if (currentX < 0 || currentX >= COLS || currentY < 0 || currentY >= ROWS) {
                 clearInterval(intervalId);
                 bullets.delete(bulletId);
@@ -382,24 +370,25 @@ var boardApp = (function(){
             }
 
             const newCellIndex = currentY * COLS + currentX;
-
-            // Verificar si hay una pared o un tanque en la nueva posición
             const cellContent = gameBoard[currentY][currentX];
             if (cellContent === '1') {
                 clearInterval(intervalId);
                 bullets.delete(bulletId);
                 return;
             }
-            if(tanks.size >= 1){
+            else if(cellContent !== '0'){
+                console.log("PEGOOOO");
+                clearInterval(intervalId);
+                bullets.delete(bulletId);
+            }
+
+            if(tanks.size <= 1){
                 console.log("Pene de mico");
                 stompClient.send('/app/matches/1/winner', {}, JSON.stringify());
             }
 
-
-            // Mover la bala a la nueva celda
-
             cells[newCellIndex].appendChild(bullet);
-        }, 1000);
+        }, 500);
 
         bullets.set(bulletId, intervalId);
     }

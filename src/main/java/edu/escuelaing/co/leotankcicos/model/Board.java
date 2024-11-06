@@ -57,4 +57,14 @@ public class Board {
     public String[][] getBoxes(){
         return boxes;
     }
+
+    public void clearBoard(){
+        for(int i=0;i< boxes.length ;i++){
+            for(int j=0;j< boxes[0].length ;j++){
+                if(!boxes[i][j].equals("0") || !boxes[i][j].equals("1")){
+                    clearBox(i,j);
+                }  
+            }
+        }
+    }
 }

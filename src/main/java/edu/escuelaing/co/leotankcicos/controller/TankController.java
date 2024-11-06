@@ -109,15 +109,6 @@ public class TankController {
         return new ResponseEntity<>(board, HttpStatus.OK);
     }
 
-    // @PostMapping("/{username}/shoot")
-    // public ResponseEntity<Bullet> shoot(@PathVariable String username) {
-    //         Bullet bullet = tankService.shoot(username);
-    //         if (bullet == null) {
-    //             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-    //         }
-    //         return new ResponseEntity<>(bullet, HttpStatus.CREATED);
-    // }
-
     @GetMapping("/bullets/{bulletId}/position")
     public ResponseEntity<Bullet> getBulletPosition(@PathVariable int bulletId) {
         Bullet bullet = tankService.getBulletPosition(bulletId);
@@ -135,7 +126,6 @@ public class TankController {
 
     @MessageMapping("/matches/1/winner")
     public void handleWinnerEvent(){
-        System.out.println("Ganador");
         tankService.handleWinner();
     }
 
