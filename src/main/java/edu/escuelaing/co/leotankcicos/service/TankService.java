@@ -241,4 +241,12 @@ public class TankService {
         System.out.println("¡El ganador es: " + winner.getName() + "!");
         msgt.convertAndSend("/topic/matches/1/winner", winner);
     }
+
+    public void reset(){
+        tankRepository.deleteAll();
+        //board.clearBoard();
+        bullets.clear();
+        initialConfig();
+        System.out.println("c reinicio pero en back");
+    }
 }

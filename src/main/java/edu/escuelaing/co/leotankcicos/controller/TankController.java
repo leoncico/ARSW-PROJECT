@@ -129,6 +129,13 @@ public class TankController {
         tankService.handleWinner();
     }
 
+    @GetMapping("/matches/1/reset")
+    public ResponseEntity<String> resetGame(){
+        tankService.reset();
+        System.out.println("c reinicio pero en controller");
+        return new ResponseEntity<>("OK", HttpStatus.OK);
+    }
+
 
 }
 

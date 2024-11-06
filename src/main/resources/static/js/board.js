@@ -298,6 +298,7 @@ var boardApp = (function(){
     function displayWinner(winner) {
         winnerName.textContent = `¡El ganador es ${winner.name}!`;
         winnerModal.style.display = "block"; // Muestra el modal
+        resetAfterWin();
     }
     
 
@@ -393,6 +394,45 @@ var boardApp = (function(){
         bullets.set(bulletId, intervalId);
     }
 
+    function resetAfterWin() {
+        return new Promise((resolve, reject) => {
+            setTimeout(() => {
+                $.get('/api/tanks/matches/1/reset', function() {
+                    // Resetea la parte visual una vez que se confirma el reinicio en el backend
+                    resetFront();
+    
+                    // Redirige a la página principal
+                    window.location.href = "index.html";
+    
+                    console.log("Se reinició correctamente.");
+                    resolve();
+                }).fail(function() {
+                    alert("Fallo al reiniciar en el backend");
+                    reject(new Error("Failed to reset"));
+                });
+            }, 10000); // Espera 10 segundos antes de iniciar el reinicio
+        });
+    }
+    function resetFront() {
+        // const tablero = document.getElementById('gameBoard');
+        // if (tablero) {
+        //     tablero.innerHTML = '';
+        // }
+        tanks = new Map();  
+        gameBoard = null;   
+        username = null;  
+        userTank = null; 
+    
+        if (stompClient && stompClient.connected) {
+            stompClient.disconnect(() => {
+                console.log("Cliente WebSocket desconectado.");
+                stompClient = null;
+            });
+        }
+    
+        console.log("Reiniciao");
+    }
+
     const styles = document.createElement('style');
     styles.textContent = `
         .bullet {
@@ -425,6 +465,7 @@ var boardApp = (function(){
         init: function() {
             getUsername()
                 .then(() => getBoard())
+                .then(()=> console.log(gameBoard))
                 .then(() => initializeBoard())
                 .then(() => getTank())
                 .then(() => getTanks())
