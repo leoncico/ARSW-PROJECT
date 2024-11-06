@@ -1,20 +1,18 @@
 var indexApp = (function () {
 
     var tank;
+    const pageModal = document.getElementById("modal-overlay");
 
-    var toggleInput = function() {
-        var options = $('#options');
-        options.toggle();
-        if (options.is(':visible')) {
-            options.append(`
-                <input id='nameInput' placeholder='Write your name' maxlength="10">
-                <div><button id='confirm'>Continue</button></div>
-            `);
-            $('#confirm').click(search);
-        } else {
-            options.empty();
-        }
-    };
+    // Función para mostrar el modal
+    function displayPage() {
+        pageModal.style.display = "block"; // Muestra el modal
+    }
+
+    // Función para ocultar el modal
+    function hidePage() {
+        pageModal.style.display = "none"; // Oculta el modal
+    }
+
 
     var search = function() {
         var username = $('#nameInput').val();
@@ -34,8 +32,22 @@ var indexApp = (function () {
     return {
         init: function() {
             $('#findMatch').click(function() {
-                toggleInput();
+                displayPage();
             });
+
+            // Ejecuta la búsqueda al hacer clic en el botón "Continue"
+            $('#confirm').click(function() {
+                search();
+                hidePage(); // Oculta el modal después de la búsqueda
+            });
+
+            // Cierra el modal al hacer clic fuera de él
+            $('#modal-overlay').click(function(e) {
+                if (e.target === pageModal) {
+                    hidePage();
+                }
+            });
+            
         }
     };
 })();
