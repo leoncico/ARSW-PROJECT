@@ -394,18 +394,15 @@ var boardApp = (function(){
         bullets.set(bulletId, intervalId);
     }
 
-    function resetAfterWin() {
+    function resetPromise(){
         return new Promise((resolve, reject) => {
             setTimeout(() => {
                 $.get('/api/tanks/matches/1/reset', function() {
                     // Resetea la parte visual una vez que se confirma el reinicio en el backend
                     resetFront();
-    
-                    // Redirige a la página principal
-                    window.location.href = "index.html";
-    
+        
                     console.log("Se reinició correctamente.");
-                    resolve();
+                    resolve(); // Resolver la promesa aquí
                 }).fail(function() {
                     alert("Fallo al reiniciar en el backend");
                     reject(new Error("Failed to reset"));
@@ -413,6 +410,19 @@ var boardApp = (function(){
             }, 10000); // Espera 10 segundos antes de iniciar el reinicio
         });
     }
+
+    function resetAfterWin() {
+        resetPromise()
+            .then(() => {
+                
+                window.location.href = "index.html";
+            })
+            .catch(error => {
+                console.error("Error al reiniciar:", error);
+            });
+    }
+
+
     function resetFront() {
         // const tablero = document.getElementById('gameBoard');
         // if (tablero) {
