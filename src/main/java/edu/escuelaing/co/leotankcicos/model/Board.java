@@ -1,4 +1,4 @@
-package edu.escuelaing.co.leotankcicos.service;
+package edu.escuelaing.co.leotankcicos.model;
 
 import org.springframework.stereotype.Component;
 

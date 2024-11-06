@@ -2,13 +2,12 @@ package edu.escuelaing.co.leotankcicos.service;
 
 import java.util.*;
 
+import edu.escuelaing.co.leotankcicos.model.Board;
 import edu.escuelaing.co.leotankcicos.model.Bullet;
-import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import edu.escuelaing.co.leotankcicos.model.Tank;
@@ -142,7 +141,6 @@ public class TankService {
 
     private void moveBullet(Bullet bullet) {
         while (bullet.isAlive()) {
-            // Actualizar la posición de la bala según su rotación
             int newX = bullet.getX();
             int newY = bullet.getY();
 
@@ -161,20 +159,16 @@ public class TankService {
                     break;
             }
 
-            // Verificar si la bala está dentro de los límites del tablero
             if (isOutOfBounds(newX, newY)) {
                 bullet.setAlive(false);
                 break;
             }
 
-            // Actualizar posición de la bala
             bullet.setX(newX);
             bullet.setY(newY);
 
-            // Obtener todos los tanques de la base de datos
             List<Tank> tanks = tankRepository.findAll();
 
-            // Comprobar colisiones con los tanques
             boolean collision = false;
             for (Tank tank : tanks) {
                 if (!tank.getName().equals(bullet.getTankId())) { // No golpear al propio tanque
@@ -186,7 +180,6 @@ public class TankService {
                 }
             }
 
-            // Si hubo colisión, terminar el movimiento de la bala
             if (collision) {
                 bullet.setAlive(false);
                 break;
@@ -213,39 +206,23 @@ public class TankService {
     }
 
     private void handleCollision(Bullet bullet, Tank tank) {
-        
+        // Eliminar el tanque del repositorio y limpiar la posición en el tablero
         tankRepository.delete(tank);
         board.clearBox(tank.getPosy(), tank.getPosx());
         msgt.convertAndSend("/topic/matches/1/bullets", board.getBoxes());
 
+            msgt.convertAndSend("/topic/matches/1/collisionResult", tank);
+            System.out.println("Resultado de la colisión en JSON: " + tank);
+
         System.out.println("¡Colisión! Tanque " + tank.getName() + " ha sido golpeado");
-
-        
-        
-
-        // try {
-        //     // Convierte el tablero en JSON y envía a través de WebSocket
-        //     String boardJson = new ObjectMapper().writeValueAsString(board.getBoxes());
-        //     msgt.convertAndSend("/topic/matches/1/bullets", boardJson);
-        // } catch (Exception e) {
-        //     System.err.println("Error al convertir el tablero a JSON: " + e.getMessage());
-        // }
     }
+
 
     public  void handleWinner(){
         Tank winner = checkVictory();
         if(winner!=null){
             announceVictory(winner);
         }
-    }
-
-    // Método auxiliar para actualizar el tablero después de mover la bala
-    private void updateBoard(Bullet bullet) {
-        String[][] boxes = board.getBoxes();
-        // Limpiar la posición anterior de la bala
-        board.clearBox(bullet.getY(), bullet.getX());
-        // Colocar la bala en su nueva posición
-        boxes[bullet.getY()][bullet.getY()] = "B"; // "B" para representar una bala
     }
 
     public String[][] getBoard() {
@@ -257,12 +234,11 @@ public class TankService {
         if (activeTanks.size() == 1) {
             return activeTanks.get(0);
         }
-    
         return null;
     }
 
     private void announceVictory(Tank winner) {
         System.out.println("¡El ganador es: " + winner.getName() + "!");
-        msgt.convertAndSend("/topic/matches/1/winner", winner.getName());
+        msgt.convertAndSend("/topic/matches/1/winner", winner);
     }
 }

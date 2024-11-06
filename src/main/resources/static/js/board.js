@@ -269,10 +269,17 @@ var boardApp = (function(){
             });
 
             stompClient.subscribe('/topic/matches/1/bullets', function (eventbody) {
-                gameBoard = JSON.parse(eventbody.body);
-                updateTanksBoard();
-                
+                            gameBoard = JSON.parse(eventbody.body);
+                            updateTanksBoard();
+
             });
+
+            stompClient.subscribe('/topic/matches/1/collisionResult', function (eventbody) {
+                const data = JSON.parse(eventbody.body);
+                const tankDeleted = data.name;
+                tanks.delete(tankDeleted);
+            });
+
 
             stompClient.subscribe('/topic/matches/1/winner', function (message) {
                 const winner = JSON.parse(message.body);
@@ -378,18 +385,21 @@ var boardApp = (function(){
 
             // Verificar si hay una pared o un tanque en la nueva posición
             const cellContent = gameBoard[currentY][currentX];
-            if (cellContent === '1') { // Si hay una pared
+            if (cellContent === '1') {
                 clearInterval(intervalId);
                 bullets.delete(bulletId);
                 return;
-            }else if(cellContent!=='0'){
+            }
+            if(tanks.size >= 1){
                 console.log("Pene de mico");
                 stompClient.send('/app/matches/1/winner', {}, JSON.stringify());
             }
 
+
             // Mover la bala a la nueva celda
+
             cells[newCellIndex].appendChild(bullet);
-        }, 1000); // Ajusta este valor para cambiar la velocidad de la bala
+        }, 1000);
 
         bullets.set(bulletId, intervalId);
     }
