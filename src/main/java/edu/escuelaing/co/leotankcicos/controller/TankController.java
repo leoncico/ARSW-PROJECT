@@ -31,7 +31,7 @@ public class TankController {
     private final TankService tankService;
 
     @Autowired
-    public TankController(TankService tankService){
+    public TankController(TankService tankService) {
         this.tankService = tankService;
     }
 
@@ -47,7 +47,7 @@ public class TankController {
             System.err.println("Error saving tank: " + e.getMessage());
             return new ResponseEntity<>(e.getMessage(), HttpStatus.CONFLICT);
         }
-        
+
     }
 
     //Obtiene todos los tanques
@@ -58,7 +58,7 @@ public class TankController {
     }
 
     // Ruta para obtener el nombre de usuario
-    @GetMapping("/username")  
+    @GetMapping("/username")
     public ResponseEntity<String> getUsername(HttpSession session) {
         String username = (String) session.getAttribute("username");
         if (username != null) {
@@ -91,7 +91,7 @@ public class TankController {
     }
 
     // Obtener un tanque específico
-    @GetMapping("/{username}")  
+    @GetMapping("/{username}")
     public ResponseEntity<Tank> getTank(@PathVariable String username) {
         Tank tank = tankService.getTankById(username);
         if (tank == null) {
@@ -119,21 +119,19 @@ public class TankController {
     }
 
     @MessageMapping("/{username}/shoot")
-    public void handleShootEvent(@DestinationVariable String username){
+    public void handleShootEvent(@DestinationVariable String username) {
         tankService.shoot(username);
     }
 
     @MessageMapping("/matches/1/winner")
-    public void handleWinnerEvent(){
+    public void handleWinnerEvent() {
         tankService.handleWinner();
     }
 
     @GetMapping("/matches/1/reset")
-    public ResponseEntity<String> resetGame(){
+    public ResponseEntity<String> resetGame() {
         tankService.reset();
         return new ResponseEntity<>("OK", HttpStatus.OK);
     }
 
-
 }
-

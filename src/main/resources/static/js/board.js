@@ -1,4 +1,4 @@
-var boardApp = (function(){
+var boardApp = (function () {
 
     const ROWS = 10;
     const COLS = 15;
@@ -22,40 +22,40 @@ var boardApp = (function(){
             }
         }
     }
-    
-    function getBoard(){
+
+    function getBoard() {
         gameBoard = [];
-        return new Promise ((resolve, reject) => {
-            $.get("/api/tanks/board", function(data) {
+        return new Promise((resolve, reject) => {
+            $.get("/api/tanks/board", function (data) {
                 gameBoard = data;
                 resolve();
-            }).fail(function() {
+            }).fail(function () {
                 alert("Failed to get board");
                 reject();
             });
         });
     }
 
-    function getTanks(){
-        return new Promise ((resolve, reject) => {
-            $.get("/api/tanks", function(data) {
+    function getTanks() {
+        return new Promise((resolve, reject) => {
+            $.get("/api/tanks", function (data) {
                 data.forEach(tank => {
                     tanks.set(tank.name, tank);
                 });
                 resolve();
-            }).fail(function() {
+            }).fail(function () {
                 alert("There are no tanks");
                 reject();
             });
         });
     }
 
-    function getTank(){
+    function getTank() {
         return new Promise((resolve, reject) => {
-            $.get(`/api/tanks/${username}`, function(tank) {
+            $.get(`/api/tanks/${username}`, function (tank) {
                 userTank = tank;
                 resolve();
-            }).fail(function() {
+            }).fail(function () {
                 alert("There is no user with that name");
                 reject();
             });
@@ -76,11 +76,12 @@ var boardApp = (function(){
             cells[cellIndex].appendChild(tankElement);
         });
     }
-    
+
     let isMoving = false; // Estado de bloqueo
 
     function moveTank(direction) {
-        if (!userTank || isMoving) return; // Si no hay tanque del usuario o está en movimiento, no hacer nada
+        if (!userTank || isMoving)
+            return; // Si no hay tanque del usuario o está en movimiento, no hacer nada
 
         isMoving = true; // Activar el bloqueo de movimiento al inicio
 
@@ -125,21 +126,21 @@ var boardApp = (function(){
                 newPosY: newPosY,
                 rotation: dir
             }),
-            success: function(updatedTank) {
+            success: function (updatedTank) {
                 userTank = updatedTank;
                 tanks.set(updatedTank.name, updatedTank);
                 gameBoard[y][x] = '0'; // Limpiar posición anterior
                 gameBoard[newPosY][newPosX] = updatedTank.name;
                 updateBoard(updatedTank);
             },
-            error: function(jqXHR) {
+            error: function (jqXHR) {
                 if (jqXHR.status === 409) {
                     console.error('Movimiento no permitido: colisión detectada en el servidor.');
                 } else {
                     console.error('Error al mover el tanque:', jqXHR.statusText);
                 }
             },
-            complete: function() {
+            complete: function () {
                 isMoving = false;
             }
         });
@@ -154,21 +155,21 @@ var boardApp = (function(){
             rotateTank(updatedTank.name, updatedTank.rotation);
         }
     }
-    
+
     function rotateTank(tankId, degrees) {
         const tank = document.getElementById(`tank-${tankId}`);
         if (tank) {
             tank.style.transform = `translate(-50%, -50%) rotate(${degrees}deg)`;
         }
     }
-    
-    function getUsername(){
+
+    function getUsername() {
         return new Promise((resolve, reject) => {
-            $.get("/api/tanks/username", function(data) {
+            $.get("/api/tanks/username", function (data) {
                 username = data;
                 console.log("Player: " + username)
                 resolve();
-            }).fail(function() {
+            }).fail(function () {
                 alert("There is no user with that name");
                 reject();
             });
@@ -177,48 +178,48 @@ var boardApp = (function(){
 
     function updateBoard(username) {
         getBoard()
-            .then(() => {
-                stompClient.send('/topic/matches/1/movement', {}, JSON.stringify(username));
-            })
+                .then(() => {
+                    stompClient.send('/topic/matches/1/movement', {}, JSON.stringify(username));
+                })
     }
 
     function updateTanksBoard() {
         const board = document.getElementById('gameBoard');
         const cells = board.getElementsByClassName('cell');
-    
+
         // Limpiar el contenido de cada celda antes de redibujar
         for (let cell of cells) {
             cell.innerHTML = '';
         }
-    
+
         for (let y = 0; y < ROWS; y++) {
             for (let x = 0; x < COLS; x++) {
                 const cellIndex = y * COLS + x;
                 const cell = cells[cellIndex];
-                
+
                 switch (gameBoard[y][x]) {
                     case '1':  // Muro
                         cell.classList.add('wall');
                         break;
-                    
+
                     case '0':  // Espacio vacío
                         cell.classList.remove('wall');
                         break;
-                    
+
                     default:   // Tanque u otro objeto
                         const tankId = gameBoard[y][x];
                         const tankData = tanks.get(tankId);
-                        
+
                         if (tankData) {
                             // Crear el elemento del tanque
                             const tankElement = document.createElement('div');
                             tankElement.className = 'tank';
                             tankElement.id = `tank-${tankId}`;
                             tankElement.style.backgroundColor = tankData.color;
-    
+
                             // Configurar rotación del tanque
                             tankElement.style.transform = `translate(-50%, -50%) rotate(${tankData.rotation}deg)`;
-                            
+
                             // Añadir el tanque a la celda correspondiente
                             cell.appendChild(tankElement);
                         }
@@ -227,10 +228,10 @@ var boardApp = (function(){
             }
         }
     }
-    
+
 
     document.addEventListener('keydown', (e) => {
-        switch(e.key) {
+        switch (e.key) {
             case 'a':
                 moveTank('left');
                 break;
@@ -246,7 +247,7 @@ var boardApp = (function(){
         }
     });
 
-    var subscribe = function(){
+    var subscribe = function () {
         console.info('Connecting to WS...');
         var socket = new SockJS('/stompendpoint');
         stompClient = Stomp.over(socket);
@@ -258,7 +259,7 @@ var boardApp = (function(){
                 updateTankPosition(newTankState);
             });
 
-            stompClient.subscribe(`/topic/matches/1/bulletAnimation`, function(eventbody) {
+            stompClient.subscribe(`/topic/matches/1/bulletAnimation`, function (eventbody) {
                 const bulletData = JSON.parse(eventbody.body);
                 const bulletId = bulletData.bulletId;
                 const startX = bulletData.startX;
@@ -269,8 +270,8 @@ var boardApp = (function(){
             });
 
             stompClient.subscribe('/topic/matches/1/bullets', function (eventbody) {
-                            gameBoard = JSON.parse(eventbody.body);
-                            updateTanksBoard();
+                gameBoard = JSON.parse(eventbody.body);
+                updateTanksBoard();
 
             });
 
@@ -284,8 +285,8 @@ var boardApp = (function(){
             stompClient.subscribe('/topic/matches/1/winner', function (message) {
                 const winner = JSON.parse(message.body);
                 displayWinner(winner);
-                });
-            
+            });
+
         });
     }
 
@@ -295,10 +296,12 @@ var boardApp = (function(){
     // Función para mostrar el modal con el nombre del ganador
     function displayWinner(winner) {
         winnerName.textContent = `¡El ganador es ${winner.name}!`;
+        tanks.delete(winner.name);
+        initializeBoard();
         winnerModal.style.display = "block"; // Muestra el modal
         resetAfterWin();
     }
-    
+
     let bullets = new Map();
 
     function shoot() {
@@ -315,6 +318,7 @@ var boardApp = (function(){
             tankId: username
         }
         stompClient.send(`/topic/matches/1/bulletAnimation`, {}, JSON.stringify(bulletData));
+
     }
 
     function animateBullet(bulletId, startX, startY, direction, tankId) {
@@ -347,7 +351,7 @@ var boardApp = (function(){
             case 180: // Izquierda
                 dx = -1;
                 break;
-            case -90: // Arriba
+            case - 90: // Arriba
                 dy = -1;
                 break;
         }
@@ -369,29 +373,27 @@ var boardApp = (function(){
                 clearInterval(intervalId);
                 bullets.delete(bulletId);
                 return;
-            }
-            else if(cellContent !== '0' && tankId !== username){
+            } else if (cellContent !== '0' && tankId !== username) {
                 clearInterval(intervalId);
                 bullets.delete(bulletId);
             }
-
-            if(tanks.size <= 1){
-                stompClient.send('/app/matches/1/winner', {}, JSON.stringify());
-            }
-
             cells[newCellIndex].appendChild(bullet);
         }, 500);
+
+        if (tanks.size <= 1) {
+            stompClient.send('/app/matches/1/winner', {}, JSON.stringify());
+        }
 
         bullets.set(bulletId, intervalId);
     }
 
-    function resetPromise(){
+    function resetPromise() {
         return new Promise((resolve, reject) => {
             setTimeout(() => {
-                $.get('/api/tanks/matches/1/reset', function() {
+                $.get('/api/tanks/matches/1/reset', function () {
                     resetFront();
                     resolve();
-                }).fail(function() {
+                }).fail(function () {
                     alert("Fallo al reiniciar en el backend");
                     reject(new Error("Failed to reset"));
                 });
@@ -401,20 +403,20 @@ var boardApp = (function(){
 
     function resetAfterWin() {
         resetPromise()
-            .then(() => {
-                window.location.href = "index.html";
-            })
-            .catch(error => {
-                console.error("Error al reiniciar:", error);
-            });
+                .then(() => {
+                    window.location.href = "index.html";
+                })
+                .catch(error => {
+                    console.error("Error al reiniciar:", error);
+                });
     }
 
 
     function resetFront() {
-        tanks = new Map(); 
-        gameBoard = null;   
-        username = null;  
-        userTank = null; 
+        tanks = new Map();
+        gameBoard = null;
+        username = null;
+        userTank = null;
         bullets = new Map();
 
         if (stompClient && stompClient.connected) {
@@ -454,14 +456,14 @@ var boardApp = (function(){
     });
 
     return {
-        init: function() {
+        init: function () {
             getUsername()
-                .then(() => getBoard())
-                .then(() => initializeBoard())
-                .then(() => getTank())
-                .then(() => getTanks())
-                .then(() => placeTanks())
-                .then(() => subscribe());
+                    .then(() => getBoard())
+                    .then(() => initializeBoard())
+                    .then(() => getTank())
+                    .then(() => getTanks())
+                    .then(() => placeTanks())
+                    .then(() => subscribe());
         }
     }
 })();

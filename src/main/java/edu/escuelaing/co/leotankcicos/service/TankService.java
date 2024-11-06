@@ -8,8 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import edu.escuelaing.co.leotankcicos.model.Tank;
 import edu.escuelaing.co.leotankcicos.repository.TankRepository;
 
@@ -25,24 +23,24 @@ public class TankService {
     private Map<Integer, Bullet> bullets;
     private int bulletId;
     private Board board;
-	
+
     private static final int MAX_PLAYERS = 3;
 
     @Autowired
-    public TankService(TankRepository tankRepository, Board board, SimpMessagingTemplate msgt){
+    public TankService(TankRepository tankRepository, Board board, SimpMessagingTemplate msgt) {
         this.tankRepository = tankRepository;
         this.board = board;
         bullets = new HashMap<>();
         initialConfig();
-	    this.msgt = msgt;
+        this.msgt = msgt;
     }
 
-    private void initialConfig(){
-        
-        defaultPositions.add(new int[]{1,8});
-        defaultPositions.add(new int[]{13,8});
-        defaultPositions.add(new int[]{13,1});
-        defaultPositions.add(new int[]{1,1});
+    private void initialConfig() {
+
+        defaultPositions.add(new int[]{1, 8});
+        defaultPositions.add(new int[]{13, 8});
+        defaultPositions.add(new int[]{13, 1});
+        defaultPositions.add(new int[]{1, 1});
 
         defaultColors.add("#a569bd");
         defaultColors.add("#f1948a");
@@ -52,10 +50,10 @@ public class TankService {
 
     public synchronized Tank saveTank(String name) throws Exception {
 
-        if(tankRepository.count() >= MAX_PLAYERS){
+        if (tankRepository.count() >= MAX_PLAYERS) {
             throw new Exception("The room is full");
         }
-        if(tankRepository.findById(name).isPresent() || name.equals("1") || name.equals("0")){
+        if (tankRepository.findById(name).isPresent() || name.equals("1") || name.equals("0")) {
             throw new Exception("Tank with this name already exists or is invalid");
         }
         int[] position = defaultPositions.poll();
@@ -71,8 +69,8 @@ public class TankService {
 
     public Tank getTankById(String username) {
         Tank tank = null;
-        if(tankRepository.findById(username).isPresent()){
-            tank = tankRepository.findById(username).get(); 
+        if (tankRepository.findById(username).isPresent()) {
+            tank = tankRepository.findById(username).get();
         }
         return tank;
     }
@@ -80,8 +78,8 @@ public class TankService {
     public Tank updateTankPosition(Tank tank, int x, int y, int newX, int newY, int rotation) throws Exception {
         String[][] boxes = board.getBoxes();
         String box = boxes[newY][newX];
-        synchronized(box){
-            if(box.equals("0")){
+        synchronized (box) {
+            if (box.equals("0")) {
                 board.putTank(tank.getName(), newX, newY);
                 board.clearBox(y, x);
                 tank.setPosx(newX);
@@ -89,16 +87,16 @@ public class TankService {
                 tank.setRotation(rotation);
                 tankRepository.save(tank);
                 boxes = board.getBoxes();
-            }else{
+            } else {
                 System.out.println("This box is already occupied by:" + box);
                 throw new Exception("This box is already occupied" + box);
             }
         }
-        
+
         return tank;
     }
 
-    public void printBoard(String [][] boxes) {
+    public void printBoard(String[][] boxes) {
         for (String[] row : boxes) {
             for (String cell : row) {
                 System.out.print(cell + " ");
@@ -201,8 +199,8 @@ public class TankService {
 
     private boolean checkCollision(Bullet bullet, Tank tank) {
         // Comprobar si la bala está lo suficientemente cerca del tanque
-        return Math.abs(tank.getPosx() - bullet.getX()) < 1 &&
-                Math.abs(tank.getPosy() - bullet.getY()) < 1;
+        return Math.abs(tank.getPosx() - bullet.getX()) < 1
+                && Math.abs(tank.getPosy() - bullet.getY()) < 1;
     }
 
     private void handleCollision(Bullet bullet, Tank tank) {
@@ -212,12 +210,16 @@ public class TankService {
         msgt.convertAndSend("/topic/matches/1/bullets", board.getBoxes());
         msgt.convertAndSend("/topic/matches/1/collisionResult", tank);
         System.out.println("¡Colisión! Tanque " + tank.getName() + " ha sido golpeado");
+
+        Tank winner = checkVictory();
+        if (winner != null) {
+            announceVictory(winner);
+        }
     }
 
-
-    public  void handleWinner(){
+    public void handleWinner() {
         Tank winner = checkVictory();
-        if(winner!=null){
+        if (winner != null) {
             announceVictory(winner);
         }
     }
@@ -236,12 +238,14 @@ public class TankService {
 
     private void announceVictory(Tank winner) {
         System.out.println("¡El ganador es: " + winner.getName() + "!");
+        tankRepository.deleteAll();
+        board.clearBoard();
         msgt.convertAndSend("/topic/matches/1/winner", winner);
     }
 
-    public void reset(){
+    public void reset() {
         tankRepository.deleteAll();
-        //board.clearBoard();
+        board.clearBoard();
         bullets.clear();
         initialConfig();
     }
