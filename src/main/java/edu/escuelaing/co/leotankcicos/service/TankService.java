@@ -47,10 +47,10 @@ public class TankService {
         defaultPositions.add(new int[]{13, 1});
         defaultPositions.add(new int[]{1, 1});
 
-        defaultColors.add("#a569bd");
-        defaultColors.add("#f1948a");
+        defaultColors.add("#fa0a0a");
+        defaultColors.add("#001ba1");
         defaultColors.add("#f1c40f");
-        defaultColors.add("#1e8449");
+        defaultColors.add("#0c7036");
     }
 
     public synchronized Tank saveTank(String name) throws Exception {
