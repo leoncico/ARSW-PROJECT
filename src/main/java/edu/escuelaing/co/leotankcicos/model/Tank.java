@@ -62,7 +62,9 @@ public class Tank {
     public void setPosy(int posy) {
         this.posy = posy;
     }
-    public int getRotation() { return rotation; }
+    public int getRotation() { 
+        return rotation; 
+    }
 
     public void setRotation(int i) {
         this.rotation = i;
