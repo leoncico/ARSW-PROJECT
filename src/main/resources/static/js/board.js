@@ -72,6 +72,7 @@ var boardApp = (function () {
             tankElement.className = 'tank';
             tankElement.id = `tank-${data.name}`;
             tankElement.style.backgroundColor = data.color;
+            tankElement.style.setProperty('--crosshair-color', data.color);
             const cellIndex = data.posy * COLS + data.posx;
             cells[cellIndex].appendChild(tankElement);
         });

@@ -100,7 +100,6 @@ button span {
 
 .titulo-container {
     margin-bottom: 1vw; /* Ajuste de espacio entre título y botón */
-    display: flex;
     justify-content: center;
     width: 80%;
 }

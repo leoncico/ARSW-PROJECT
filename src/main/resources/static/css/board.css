@@ -1,16 +1,27 @@
 :root {
     --cell-size: 40px;
-    --wall-color: #666;
+    --wall-color: #333;
     --floor-color: #eee;
 }
 
+html,body {
+    background-image: url('fondo.jpg'); /* Ruta de la imagen de fondo */ /* Hace que la imagen cubra toda la pantalla */
+    background-position: center; /* Centra la imagen de fondo */
+    background-repeat: no-repeat; /* Evita que la imagen se repita */
+    margin: 0;
+    height: 100%;
+}
+
 .game-container {
+    flex-direction: column;
+    margin-top: 10px;
     display: flex;
     justify-content: center;
     align-items: center;
     min-height: 80vh;
-    background-color: #f0f0f0;
-    font-family: Arial, sans-serif;
+    background: linear-gradient(to bottom right, rgba(199, 17, 17, 0.5), rgba(220, 234, 221, 0.9));
+    font-family: 'Press Start 2P', cursive;
+    background-size: cover;
 }
 
 .game-board {
@@ -21,7 +32,7 @@
     background-color: var(--wall-color);
     padding: 10px;
     border-radius: 8px;
-    box-shadow: 0 0 20px rgba(0,0,0,0.2);
+    box-shadow: 0 0 20px rgba(255, 8, 8, 0.868);
 }
 
 .cell {
@@ -33,12 +44,18 @@
 
 .wall {
     background-color: var(--wall-color);
+    background-image: 
+        linear-gradient(90deg, transparent 75%, #333 75%), /* líneas verticales */
+        linear-gradient(#444 75%, transparent 75%), /* líneas horizontales */
+        linear-gradient(90deg, #333 25%, transparent 25%, transparent 75%, #333 75%),
+        linear-gradient(#333 25%, transparent 25%, transparent 75%, #333 75%);
+    background-size: 50px 50px; /* Tamaño de cada "ladrillo" */
+    background-position: 0px 0px, 0px 25px, 25px -25px, -25px 0px;
 }
 
 .tank {
     width: 30px;
     height: 30px;
-    background-color: #4CAF50;
     position: absolute;
     top: 50%;
     left: 50%;
@@ -52,11 +69,25 @@
     position: absolute;
     width: 20px;
     height: 6px;
-    background-color: #2E7D32;
+    background-color: black;
+    /* background-color: var(--crosshair-color, #000000); */
     top: 50%;
     left: 100%;
     transform: translateY(-50%);
     border-radius: 3px;
+}
+
+
+.titulo {
+    max-width: 30vw;
+    width: 40vw; /* Ajuste para pantallas más pequeñas */
+    height: auto;
+}
+
+.titulo-container {
+    display: flex;
+    justify-content: center;
+    width: 80%;
 }
 
 
