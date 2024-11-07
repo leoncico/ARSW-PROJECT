@@ -10,6 +10,7 @@ html,body {
     background-repeat: no-repeat; /* Evita que la imagen se repita */
     margin: 0;
     height: 100%;
+    overflow: hidden;
 }
 
 .game-container {
