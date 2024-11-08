@@ -80,10 +80,14 @@ public class TankService {
         return tank;
     }
 
-    public Tank updateTankPosition(Tank tank, int x, int y, int newX, int newY, int rotation) throws Exception {
-        String[][] boxes = board.getBoxes();
-        String box = boxes[newY][newX];
+    public synchronized Tank updateTankPosition(String username, int x, int y, int newX, int newY, int rotation) throws Exception {
+        Tank tank = tankRepository.findById(username).orElse(null);
+        if (tank == null) {
+            return null;
+        }
         synchronized (board.getLock(newX, newY)) {
+            String[][] boxes = board.getBoxes();
+            String box = boxes[newY][newX];
             if (box.equals("0")) {
                 board.putTank(tank.getName(), newX, newY);
                 board.clearBox(y, x);
@@ -92,12 +96,13 @@ public class TankService {
                 tank.setRotation(rotation);
                 tankRepository.save(tank);
                 boxes = board.getBoxes();
+
             } else {
                 System.out.println("This box is already occupied by: " + box);
                 throw new Exception("This box is already occupied by: " + box);
             }
         }
-    
+        //msgt.convertAndSend("/topic/matches/1/movement", tank);
         return tank;
     }
 

@@ -69,24 +69,18 @@ public class TankController {
     }
 
     // Mover tanque 
-    @PutMapping("/{username}/move")
-    public ResponseEntity<Tank> moveTank(@PathVariable String username, @RequestBody Map<String, Integer> moveRequest) {
-        Tank tank = tankService.getTankById(username);
-        if (tank == null) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-
+    @MessageMapping("/{username}/move")
+    public void moveTank(@DestinationVariable String username, @RequestBody Map<String, Integer> moveRequest){
         Integer posX = moveRequest.get("posX");
         Integer posY = moveRequest.get("posY");
         Integer newPosX = moveRequest.get("newPosX");
         Integer newPosY = moveRequest.get("newPosY");
         Integer rotation = moveRequest.get("rotation");
-
         try {
-            tank = tankService.updateTankPosition(tank, posX, posY, newPosX, newPosY, rotation);
-            return new ResponseEntity<>(tank, HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.CONFLICT);
+            System.out.println("Moving tank " + username + " to (" + newPosX + ", " + newPosY + ")");
+            Tank updatedTank = tankService.updateTankPosition(username, posX, posY, newPosX, newPosY, rotation);
+        }catch (Exception e) {
+            System.err.println("Error al mover el tanque: " + e.getMessage());
         }
     }
 

@@ -115,44 +115,28 @@ var boardApp = (function () {
                 return;
         }
 
-        $.ajax({
-            url: `/api/tanks/${username}/move`,
-            type: 'PUT',
-            contentType: 'application/json',
-            data: JSON.stringify({
-                posX: x,
-                posY: y,
-                newPosX: newPosX,
-                newPosY: newPosY,
-                rotation: dir
-            }),
-            success: function (updatedTank) {
-                userTank = updatedTank;
-                tanks.set(updatedTank.name, updatedTank);
-                gameBoard[y][x] = '0'; // Limpiar posición anterior
-                gameBoard[newPosY][newPosX] = updatedTank.name;
-                updateBoard(updatedTank);
-            },
-            error: function (jqXHR) {
-                if (jqXHR.status === 409) {
-                    console.error('Movimiento no permitido: colisión detectada en el servidor.');
-                } else {
-                    console.error('Error al mover el tanque:', jqXHR.statusText);
-                }
-            },
-            complete: function () {
-                isMoving = false;
-            }
-        });
+        stompClient.send(`/app/${username}/move`, {}, JSON.stringify({
+            posX:x,
+            posY:y,
+            newPosX:newPosX,
+            newPosY:newPosY,
+            rotation:dir
+        }));
+        stompClient.send(`/topic/matches/1/movement`,{}, JSON.stringify({
+            name:username,
+            newPosX:newPosX,
+            newPosY:newPosY,
+            rotation:dir
+        }));
     }
 
-    function updateTankPosition(updatedTank) {
-        const tankElement = document.getElementById(`tank-${updatedTank.name}`);
+    function updateTankPosition(name, newPosX, newPosY, rotation) {
+        const tankElement = document.getElementById(`tank-${name}`);
         if (tankElement) {
             const cells = document.getElementsByClassName('cell');
-            const newCellIndex = updatedTank.posy * COLS + updatedTank.posx;
+            const newCellIndex = newPosY * COLS + newPosX;
             cells[newCellIndex].appendChild(tankElement);
-            rotateTank(updatedTank.name, updatedTank.rotation);
+            rotateTank(name, rotation);
         }
     }
 
@@ -253,10 +237,14 @@ var boardApp = (function () {
         stompClient = Stomp.over(socket);
         stompClient.connect({}, function (frame) {
             console.log('Connected: ' + frame);
-            stompClient.subscribe('/topic/matches/1/movement', function (eventbody) {
-                const newTankState = JSON.parse(eventbody.body);
 
-                updateTankPosition(newTankState);
+            stompClient.subscribe(`/topic/matches/1/movement`, function (eventbody) {
+                const updatedTank = JSON.parse(eventbody.body);
+                const name = updatedTank.name;
+                const newPosX = updatedTank.newPosX;
+                const newPosY = updatedTank.newPosY;
+                const rotation = updatedTank.rotation;
+                updateTankPosition(name, newPosX, newPosY, rotation);
             });
 
             stompClient.subscribe(`/topic/matches/1/bulletAnimation`, function (eventbody) {
