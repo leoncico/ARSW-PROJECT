@@ -208,8 +208,11 @@ public class TankService {
     private void handleCollision(Bullet bullet, Tank tank) {
         tanks.remove(tank.getName());
         board.clearBox(tank.getPosx(), tank.getPosy());
+        Map<String, String> response = new HashMap<>();
+        response.put("tank", tank.getName());
+        response.put("bulletId", String.valueOf(bullet.getId()));
         msgt.convertAndSend("/topic/matches/1/bullets", board.getBoxes());
-        msgt.convertAndSend("/topic/matches/1/collisionResult", tank);
+        msgt.convertAndSend("/topic/matches/1/collisionResult", response);
         System.out.println("¡Colisión! Tanque " + tank.getName() + " ha sido golpeado");
 
         Tank winner = checkVictory();
