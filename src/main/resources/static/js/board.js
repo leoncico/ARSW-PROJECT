@@ -80,10 +80,10 @@ var boardApp = (function () {
     let isMoving = false; // Estado de bloqueo
 
     function moveTank(direction) {
-        if (!userTank || isMoving)
-            return; // Si no hay tanque del usuario o está en movimiento, no hacer nada
+        // if (!userTank || isMoving)
+        //     return; // Si no hay tanque del usuario o está en movimiento, no hacer nada
 
-        isMoving = true; // Activar el bloqueo de movimiento al inicio
+        // isMoving = true; // Activar el bloqueo de movimiento al inicio
 
         let x = userTank.posx;
         let y = userTank.posy;
@@ -111,7 +111,7 @@ var boardApp = (function () {
                 break;
             default:
                 console.error('Dirección inválida:', direction);
-                isMoving = false;
+                //isMoving = false;
                 return;
         }
 
@@ -122,22 +122,12 @@ var boardApp = (function () {
             newPosY:newPosY,
             rotation:dir
         }));
-        stompClient.send(`/topic/matches/1/movement`,{}, JSON.stringify({
-            name:username,
-            newPosX:newPosX,
-            newPosY:newPosY,
-            rotation:dir
-        }));
-    }
-
-    function updateTankPosition(name, newPosX, newPosY, rotation) {
-        const tankElement = document.getElementById(`tank-${name}`);
-        if (tankElement) {
-            const cells = document.getElementsByClassName('cell');
-            const newCellIndex = newPosY * COLS + newPosX;
-            cells[newCellIndex].appendChild(tankElement);
-            rotateTank(name, rotation);
-        }
+        // stompClient.send(`/topic/matches/1/movement`,{}, JSON.stringify({
+        //     name:username,
+        //     newPosX:newPosX,
+        //     newPosY:newPosY,
+        //     rotation:dir
+        // }));
     }
 
     function rotateTank(tankId, degrees) {
@@ -195,16 +185,13 @@ var boardApp = (function () {
                         const tankData = tanks.get(tankId);
 
                         if (tankData) {
-                            // Crear el elemento del tanque
                             const tankElement = document.createElement('div');
                             tankElement.className = 'tank';
                             tankElement.id = `tank-${tankId}`;
                             tankElement.style.backgroundColor = tankData.color;
 
-                            // Configurar rotación del tanque
                             tankElement.style.transform = `translate(-50%, -50%) rotate(${tankData.rotation}deg)`;
 
-                            // Añadir el tanque a la celda correspondiente
                             cell.appendChild(tankElement);
                         }
                         break;
@@ -231,6 +218,17 @@ var boardApp = (function () {
         }
     });
 
+    function updateTankPosition(name, newPosX, newPosY, rotation) {
+        console.log("NAME 2" + name);
+        const tankElement = document.getElementById(`tank-${name}`);
+        if (tankElement) {
+            const cells = document.getElementsByClassName('cell');
+            const newCellIndex = newPosY * COLS + newPosX;
+            cells[newCellIndex].appendChild(tankElement);
+            rotateTank(name, rotation);
+        }
+    }
+
     var subscribe = function () {
         console.info('Connecting to WS...');
         var socket = new SockJS('/stompendpoint');
@@ -241,9 +239,13 @@ var boardApp = (function () {
             stompClient.subscribe(`/topic/matches/1/movement`, function (eventbody) {
                 const updatedTank = JSON.parse(eventbody.body);
                 const name = updatedTank.name;
-                const newPosX = updatedTank.newPosX;
-                const newPosY = updatedTank.newPosY;
+                if(name === username){
+                    userTank = updatedTank;
+                }
+                const newPosX = updatedTank.posx;
+                const newPosY = updatedTank.posy;
                 const rotation = updatedTank.rotation;
+                console.log(updatedTank);
                 updateTankPosition(name, newPosX, newPosY, rotation);
             });
 

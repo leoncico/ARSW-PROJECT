@@ -80,29 +80,30 @@ public class TankService {
         return tank;
     }
 
-    public synchronized Tank updateTankPosition(String username, int x, int y, int newX, int newY, int rotation) throws Exception {
+    public Tank updateTankPosition(String username, int x, int y, int newX, int newY, int rotation) throws Exception {
         Tank tank = tankRepository.findById(username).orElse(null);
         if (tank == null) {
             return null;
         }
         synchronized (board.getLock(newX, newY)) {
-            String[][] boxes = board.getBoxes();
-            String box = boxes[newY][newX];
-            if (box.equals("0")) {
-                board.putTank(tank.getName(), newX, newY);
-                board.clearBox(y, x);
-                tank.setPosx(newX);
-                tank.setPosy(newY);
-                tank.setRotation(rotation);
-                tankRepository.save(tank);
-                boxes = board.getBoxes();
-
-            } else {
-                System.out.println("This box is already occupied by: " + box);
-                throw new Exception("This box is already occupied by: " + box);
+            synchronized(board.getLock(x, y)) {
+                String[][] boxes = board.getBoxes();
+                String box = boxes[newY][newX];
+                if (box.equals("0")) {
+                    board.clearBox(x, y);
+                    board.putTank(tank.getName(), newX, newY);
+                    tank.setPosx(newX);
+                    tank.setPosy(newY);
+                    tank.setRotation(rotation);
+                    tankRepository.save(tank);
+                } else {
+                    System.out.println("This box is already occupied by: " + box);
+                    throw new Exception("This box is already occupied by: " + box);
+                }
             }
         }
-        //msgt.convertAndSend("/topic/matches/1/movement", tank);
+        msgt.convertAndSend("/topic/matches/1/movement", tank);
+        printBoard(getBoard());
         return tank;
     }
 

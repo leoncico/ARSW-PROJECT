@@ -5,10 +5,9 @@ import org.springframework.stereotype.Component;
 @Component
 public class Board {
     private String[][] boxes;
-    private final Object[][] locks; // Matriz de objetos de bloqueo
+    private final Object[][] locks;
 
     public Board() {
-        // Inicializamos `boxes` con el valor predeterminado
         this.boxes = new String[][]{
             {"1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1"},
             {"1", "0", "0", "0", "0", "0", "0", "1", "0", "0", "0", "0", "0", "0", "1"},
@@ -23,6 +22,7 @@ public class Board {
         };
 
         this.locks = new Object[boxes.length][boxes[0].length];
+
         for (int i = 0; i < boxes.length; i++) {
             for (int j = 0; j < boxes[0].length; j++) {
                 locks[i][j] = new Object();
@@ -31,7 +31,7 @@ public class Board {
     }
 
     public String getValue(int x, int y) {
-        return boxes[x][y];
+        return boxes[y][x];
     }
 
     public void putTank(String username, int x, int y) {
@@ -39,7 +39,7 @@ public class Board {
     }
 
     public void clearBox(int x, int y) {
-        boxes[x][y] = "0";
+        boxes[y][x] = "0";
     }
 
     public String[][] getBoxes() {
