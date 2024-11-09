@@ -382,7 +382,7 @@ var boardApp = (function () {
                 return;
             }
 
-        }, 450);
+        }, 350);
 
         if (tanks.size <= 1) {
             stompClient.send('/app/matches/1/winner', {}, JSON.stringify());
