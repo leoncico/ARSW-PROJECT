@@ -8,6 +8,16 @@ public class Board {
     private final Object[][] locks;
 
     public Board() {
+        initializeBoard();
+        this.locks = new Object[boxes.length][boxes[0].length];
+        for (int i = 0; i < boxes.length; i++) {
+            for (int j = 0; j < boxes[0].length; j++) {
+                locks[i][j] = new Object();
+            }
+        }
+    }
+
+    public void initializeBoard(){
         this.boxes = new String[][]{
             {"1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1"},
             {"1", "0", "0", "0", "0", "0", "0", "1", "0", "0", "0", "0", "0", "0", "1"},
@@ -20,14 +30,6 @@ public class Board {
             {"1", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "1"},
             {"1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1"}
         };
-
-        this.locks = new Object[boxes.length][boxes[0].length];
-
-        for (int i = 0; i < boxes.length; i++) {
-            for (int j = 0; j < boxes[0].length; j++) {
-                locks[i][j] = new Object();
-            }
-        }
     }
 
     public String getValue(int x, int y) {
@@ -47,13 +49,7 @@ public class Board {
     }
 
     public void clearBoard() {
-        for (int i = 0; i < boxes.length; i++) {
-            for (int j = 0; j < boxes[0].length; j++) {
-                if (!boxes[i][j].equals("0") && !boxes[i][j].equals("1")) {
-                    clearBox(i, j);
-                }
-            }
-        }
+        initializeBoard();
     }
 
     public Object getLock(int x, int y) {

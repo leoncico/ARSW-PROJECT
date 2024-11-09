@@ -269,6 +269,9 @@ var boardApp = (function () {
                 const data = JSON.parse(eventbody.body);
                 const tankDeleted = data.name;
                 tanks.delete(tankDeleted);
+                if(tankDeleted === username){
+                    username = null;
+                }
             });
 
 
@@ -307,8 +310,10 @@ var boardApp = (function () {
             direction: direction,
             tankId: username
         }
-        stompClient.send(`/topic/matches/1/bulletAnimation`, {}, JSON.stringify(bulletData));
-
+        //stompClient.send(`/topic/matches/1/bulletAnimation`, {}, JSON.stringify(bulletData));
+        if(username){
+            stompClient.send(`/topic/matches/1/bulletAnimation`, {}, JSON.stringify(bulletData));
+        }
     }
 
     function animateBullet(bulletId, startX, startY, direction, tankId) {
@@ -316,12 +321,12 @@ var boardApp = (function () {
         const bullet = document.createElement('div');
         bullet.className = 'bullet';
         bullet.id = `bullet-${bulletId}`;
-
+    
         // Obtener las celdas del tablero
         const cells = document.getElementsByClassName('cell');
         let currentX = startX;
         let currentY = startY;
-
+    
         // Colocar la bala en la posición inicial
         const initialCellIndex = currentY * COLS + currentX;
         if (initialCellIndex < 0 || initialCellIndex >= cells.length) {
@@ -329,7 +334,7 @@ var boardApp = (function () {
             return;
         }
         cells[initialCellIndex].appendChild(bullet);
-
+    
         let dx = 0, dy = 0;
         switch (direction) {
             case 0: // Derecha
@@ -345,35 +350,45 @@ var boardApp = (function () {
                 dy = -1;
                 break;
         }
-
+    
+        const removeBullet = () => {
+            bullet.remove(); // Eliminar el elemento visual
+            clearInterval(intervalId);
+            bullets.delete(bulletId);
+        };
+    
         const intervalId = setInterval(() => {
             bullet.remove();
             currentX += dx;
             currentY += dy;
-
+    
+            // Verificar si la bala está fuera de los límites
             if (currentX < 0 || currentX >= COLS || currentY < 0 || currentY >= ROWS) {
-                clearInterval(intervalId);
-                bullets.delete(bulletId);
+                removeBullet();
                 return;
             }
-
+    
             const newCellIndex = currentY * COLS + currentX;
             const cellContent = gameBoard[currentY][currentX];
+            
+            // Colisión con pared
             if (cellContent === '1') {
-                clearInterval(intervalId);
-                bullets.delete(bulletId);
+                removeBullet();
                 return;
-            } else if (cellContent !== '0' && tankId !== username) {
-                clearInterval(intervalId);
-                bullets.delete(bulletId);
+            } 
+            // Colisión con tanque enemigo
+            else if (cellContent !== '0' && tankId !== username) {
+                removeBullet();
+                return;
             }
+            
             cells[newCellIndex].appendChild(bullet);
         }, 500);
-
+    
         if (tanks.size <= 1) {
             stompClient.send('/app/matches/1/winner', {}, JSON.stringify());
         }
-
+    
         bullets.set(bulletId, intervalId);
     }
 
