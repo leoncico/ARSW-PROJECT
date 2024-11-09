@@ -210,7 +210,8 @@ public class TankService {
         board.clearBox(tank.getPosx(), tank.getPosy());
         Map<String, String> response = new HashMap<>();
         response.put("tank", tank.getName());
-        response.put("bulletId", String.valueOf(bullet.getId()));
+        response.put("x", String.valueOf(tank.getPosx()));
+        response.put("y", String.valueOf(tank.getPosy()));
         msgt.convertAndSend("/topic/matches/1/bullets", board.getBoxes());
         msgt.convertAndSend("/topic/matches/1/collisionResult", response);
         System.out.println("¡Colisión! Tanque " + tank.getName() + " ha sido golpeado");

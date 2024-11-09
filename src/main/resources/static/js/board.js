@@ -7,6 +7,7 @@ var boardApp = (function () {
     let username;
     let userTank;
     var stompClient;
+    var lastPosition;
 
     function initializeBoard() {
         const board = document.getElementById('gameBoard');
@@ -229,6 +230,8 @@ var boardApp = (function () {
         }
     }
 
+
+
     var subscribe = function () {
         console.info('Connecting to WS...');
         var socket = new SockJS('/stompendpoint');
@@ -262,19 +265,17 @@ var boardApp = (function () {
             stompClient.subscribe('/topic/matches/1/bullets', function (eventbody) {
                 gameBoard = JSON.parse(eventbody.body);
                 updateTanksBoard();
-
             });
 
             stompClient.subscribe('/topic/matches/1/collisionResult', function (eventbody) {
                 const data = JSON.parse(eventbody.body);
                 const tankDeleted = data.tank;
-                const bulletId = data.bulletId;
+                lastPosition = {x: data.x, y: data.y};
                 tanks.delete(tankDeleted);
                 if(tankDeleted === username){
                     username = null;
                 }
             });
-
 
             stompClient.subscribe('/topic/matches/1/winner', function (message) {
                 const winner = JSON.parse(message.body);
@@ -318,18 +319,24 @@ var boardApp = (function () {
     }
 
     function animateBullet(bulletId, startX, startY, direction, tankId) {
+        // Crear el elemento de la bala
         const bullet = document.createElement('div');
         bullet.className = 'bullet';
         bullet.id = `bullet-${bulletId}`;
+
+        // Obtener las celdas del tablero
         const cells = document.getElementsByClassName('cell');
         let currentX = startX;
         let currentY = startY;
+
+        // Colocar la bala en la posición inicial
         const initialCellIndex = currentY * COLS + currentX;
         if (initialCellIndex < 0 || initialCellIndex >= cells.length) {
             console.error("Posición inicial fuera de los límites:", initialCellIndex);
             return;
         }
         cells[initialCellIndex].appendChild(bullet);
+
         let dx = 0, dy = 0;
         switch (direction) {
             case 0: // Derecha
@@ -359,16 +366,69 @@ var boardApp = (function () {
 
             const newCellIndex = currentY * COLS + currentX;
             const cellContent = gameBoard[currentY][currentX];
-            if (cellContent == '1' || tankId !== username) {
+
+
+            // if(cellContent === '1'){
+            //     clearInterval(intervalId);
+            //     bullets.delete(bulletId);
+            //     return;
+            // }
+
+            
+            console.log("Position de recorrido " + currentX +" " + currentY)
+            if (lastPosition != null) {
+                console.log("Position de muertes " + " " + lastPosition.x + " " + lastPosition.y);
+                if (currentX == lastPosition.x && currentY == lastPosition.y) {
+                    console.log("Colisión detectada: fin de la animación de bala");
+                    clearInterval(intervalId); // Detiene la animación
+                    bullets.delete(bulletId); // Elimina la bala del mapa de balas activas
+                    lastPosition = null; // Resetea lastPosition si es necesario
+                    return;
+                }
+            }
+
+            if(cellContent === '0'){
+                cells[newCellIndex].appendChild(bullet);
+            }
+            else{
+                // if (currentX == lastPosition.x && currentY == lastPosition.y) {
+                //     console.log("Colisión detectada: fin de la animación de bala");
+                //     clearInterval(intervalId); // Detiene la animación
+                //     bullets.delete(bulletId); // Elimina la bala del mapa de balas activas
+                //     lastPosition = null; // Resetea lastPosition si es necesario
+                //     return;
+                // }
+                // if (currentX -1 == lastPosition.x && currentY -1 == lastPosition.y) {
+                //     console.log("Colisión detectada: fin de la animación de bala");
+                //     clearInterval(intervalId); // Detiene la animación
+                //     bullets.delete(bulletId); // Elimina la bala del mapa de balas activas
+                //     lastPosition = null; // Resetea lastPosition si es necesario
+                //     return;
+                // }
+                
                 clearInterval(intervalId);
                 bullets.delete(bulletId);
                 return;
+
+
+
             }
-            else if(cellContent != '0'){
-                clearInterval(intervalId);
-                bullets.delete(bulletId);
-            }
-            cells[newCellIndex].appendChild(bullet);
+            
+            // if (cellContent !== '0' && cellContent !== '1') {
+            //     clearInterval(intervalId);
+            //     bullets.delete(bulletId);
+            //     return;
+            // }
+            // else if(cellContent === '0'){
+            //     cells[newCellIndex].appendChild(bullet);
+            // }
+
+            // else if(cellContent === '1'){
+            //     clearInterval(intervalId);
+            //     bullets.delete(bulletId);
+            //     return;
+            // }
+            
         }, 500);
 
         if (tanks.size <= 1) {
@@ -377,6 +437,7 @@ var boardApp = (function () {
 
         bullets.set(bulletId, intervalId);
     }
+    
 
     function resetPromise() {
         return new Promise((resolve, reject) => {
