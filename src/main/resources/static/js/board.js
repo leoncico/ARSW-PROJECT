@@ -1,85 +1,10 @@
-var boardApp = (function () {
+const boardApp = (function () {
 
     const ROWS = 10;
     const COLS = 15;
-    let tanks = new Map();
-    let gameBoard;
-    let username;
-    let userTank;
-    var stompClient;
     var lastPosition;
 
-    function initializeBoard() {
-        const board = document.getElementById('gameBoard');
-        board.innerHTML = '';
-        for (let y = 0; y < ROWS; y++) {
-            for (let x = 0; x < COLS; x++) {
-                const cell = document.createElement('div');
-                cell.className = 'cell';
-                if (gameBoard[y][x] === '1') {
-                    cell.classList.add('wall');
-                }
-                board.appendChild(cell);
-            }
-        }
-    }
-
-    function getBoard() {
-        gameBoard = [];
-        return new Promise((resolve, reject) => {
-            $.get("/api/tanks/board", function (data) {
-                gameBoard = data;
-                resolve();
-            }).fail(function () {
-                alert("Failed to get board");
-                reject();
-            });
-        });
-    }
-
-    function getTanks() {
-        return new Promise((resolve, reject) => {
-            $.get("/api/tanks", function (data) {
-                data.forEach(tank => {
-                    tanks.set(tank.name, tank);
-                });
-                resolve();
-            }).fail(function () {
-                alert("There are no tanks");
-                reject();
-            });
-        });
-    }
-
-    function getTank() {
-        return new Promise((resolve, reject) => {
-            $.get(`/api/tanks/${username}`, function (tank) {
-                userTank = tank;
-                resolve();
-            }).fail(function () {
-                alert("There is no user with that name");
-                reject();
-            });
-        });
-    }
-
-    function placeTanks() {
-        tanks.forEach((value, key) => {
-            gameBoard[value.posy][value.posx] = value.name;
-        });
-        const cells = document.getElementsByClassName('cell');
-        tanks.forEach((data) => {
-            const tankElement = document.createElement('div');
-            tankElement.className = 'tank';
-            tankElement.id = `tank-${data.name}`;
-            tankElement.style.backgroundColor = data.color;
-            const cellIndex = data.posy * COLS + data.posx;
-            cells[cellIndex].appendChild(tankElement);
-        });
-    }
-
-    let isMoving = false; // Estado de bloqueo
-
+    
     function moveTank(direction) {
         // if (!userTank || isMoving)
         //     return; // Si no hay tanque del usuario o está en movimiento, no hacer nada
@@ -138,19 +63,6 @@ var boardApp = (function () {
         }
     }
 
-    function getUsername() {
-        return new Promise((resolve, reject) => {
-            $.get("/api/tanks/username", function (data) {
-                username = data;
-                console.log("Player: " + username)
-                resolve();
-            }).fail(function () {
-                alert("There is no user with that name");
-                reject();
-            });
-        });
-    }
-
     function updateBoard(username) {
         getBoard()
                 .then(() => {
@@ -201,24 +113,6 @@ var boardApp = (function () {
         }
     }
 
-
-    document.addEventListener('keydown', (e) => {
-        switch (e.key) {
-            case 'a':
-                moveTank('left');
-                break;
-            case 'd':
-                moveTank('right');
-                break;
-            case 'w':
-                moveTank('up');
-                break;
-            case 's':
-                moveTank('down');
-                break;
-        }
-    });
-
     function updateTankPosition(name, newPosX, newPosY, rotation) {
         const tankElement = document.getElementById(`tank-${name}`);
         if (tankElement) {
@@ -227,60 +121,6 @@ var boardApp = (function () {
             cells[newCellIndex].appendChild(tankElement);
             rotateTank(name, rotation);
         }
-    }
-
-
-
-    var subscribe = function () {
-        console.info('Connecting to WS...');
-        var socket = new SockJS('/stompendpoint');
-        stompClient = Stomp.over(socket);
-        stompClient.connect({}, function (frame) {
-            console.log('Connected: ' + frame);
-
-            stompClient.subscribe(`/topic/matches/1/movement`, function (eventbody) {
-                const updatedTank = JSON.parse(eventbody.body);
-                const name = updatedTank.name;
-                if(name === username){
-                    userTank = updatedTank;
-                }
-                const newPosX = updatedTank.posx;
-                const newPosY = updatedTank.posy;
-                const rotation = updatedTank.rotation;
-                updateTankPosition(name, newPosX, newPosY, rotation);
-            });
-
-            stompClient.subscribe(`/topic/matches/1/bulletAnimation`, function (eventbody) {
-                const bulletData = JSON.parse(eventbody.body);
-                const bulletId = bulletData.bulletId;
-                const startX = bulletData.startX;
-                const startY = bulletData.startY;
-                const direction = bulletData.direction;
-                const tankId = bulletData.tankId;
-                animateBullet(bulletId, startX, startY, direction, tankId);
-            });
-
-            stompClient.subscribe('/topic/matches/1/bullets', function (eventbody) {
-                gameBoard = JSON.parse(eventbody.body);
-                updateTanksBoard();
-            });
-
-            stompClient.subscribe('/topic/matches/1/collisionResult', function (eventbody) {
-                const data = JSON.parse(eventbody.body);
-                const tankDeleted = data.tank;
-                lastPosition = {x: data.x, y: data.y};
-                tanks.delete(tankDeleted);
-                if(tankDeleted === username){
-                    username = null;
-                }
-            });
-
-            stompClient.subscribe('/topic/matches/1/winner', function (message) {
-                const winner = JSON.parse(message.body);
-                displayWinner(winner);
-            });
-
-        });
     }
 
     const winnerModal = document.getElementById("winnerModal");
@@ -454,21 +294,155 @@ var boardApp = (function () {
 
 
     // Agregar evento de disparo (tecla espaciadora)
-    document.addEventListener('keydown', (e) => {
-        if (e.code === 'Space') {
-            shoot();
+    
+
+//////////////
+
+    const api = apiClient;
+    let username;
+    let userTank;
+    let gameBoard = [];
+    let tanks = new Map();
+    let stompClient;
+
+    function placeTanks() {
+        tanks.forEach((value, key) => {
+            gameBoard[value.posy][value.posx] = value.name;
+        });
+        const cells = document.getElementsByClassName('cell');
+        tanks.forEach((data) => {
+            const tankElement = document.createElement('div');
+            tankElement.className = 'tank';
+            tankElement.id = `tank-${data.name}`;
+            tankElement.style.backgroundColor = data.color;
+            const cellIndex = data.posy * COLS + data.posx;
+            cells[cellIndex].appendChild(tankElement);
+        });
+    }
+
+    function subscribe(){
+        console.info('Connecting to WS...');
+        var socket = new SockJS('/stompendpoint');
+        stompClient = Stomp.over(socket);
+        stompClient.connect({}, function (frame) {
+            console.log('Connected: ' + frame);
+
+            stompClient.subscribe(`/topic/matches/1/movement`, function (eventbody) {
+                const updatedTank = JSON.parse(eventbody.body);
+                const name = updatedTank.name;
+                if(name === username){
+                    userTank = updatedTank;
+                }
+                const newPosX = updatedTank.posx;
+                const newPosY = updatedTank.posy;
+                const rotation = updatedTank.rotation;
+                updateTankPosition(name, newPosX, newPosY, rotation);
+            });
+
+            stompClient.subscribe(`/topic/matches/1/bulletAnimation`, function (eventbody) {
+                const bulletData = JSON.parse(eventbody.body);
+                const bulletId = bulletData.bulletId;
+                const startX = bulletData.startX;
+                const startY = bulletData.startY;
+                const direction = bulletData.direction;
+                const tankId = bulletData.tankId;
+                animateBullet(bulletId, startX, startY, direction, tankId);
+            });
+
+            stompClient.subscribe('/topic/matches/1/bullets', function (eventbody) {
+                gameBoard = JSON.parse(eventbody.body);
+                updateTanksBoard();
+            });
+
+            stompClient.subscribe('/topic/matches/1/collisionResult', function (eventbody) {
+                const data = JSON.parse(eventbody.body);
+                const tankDeleted = data.tank;
+                lastPosition = {x: data.x, y: data.y};
+                tanks.delete(tankDeleted);
+                if(tankDeleted === username){
+                    username = null;
+                }
+            });
+
+            stompClient.subscribe('/topic/matches/1/winner', function (message) {
+                const winner = JSON.parse(message.body);
+                displayWinner(winner);
+            });
+
+        });
+    }
+
+    function addListeners(){
+        document.addEventListener('keydown', (e) => {
+            switch (e.key) {
+                case 'a':
+                    moveTank('left');
+                    break;
+                case 'd':
+                    moveTank('right');
+                    break;
+                case 'w':
+                    moveTank('up');
+                    break;
+                case 's':
+                    moveTank('down');
+                    break;
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                shoot();
+            }
+        });
+    }
+
+    function initializeBoard() {
+        const board = document.getElementById('gameBoard');
+        board.innerHTML = '';
+        for (let y = 0; y < ROWS; y++) {
+            for (let x = 0; x < COLS; x++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                if (gameBoard[y][x] === '1') {
+                    cell.classList.add('wall');
+                }
+                board.appendChild(cell);
+            }
         }
-    });
+    }
+
+    function init(){
+        api.getUsername()
+            .then(function(data){
+                username = data;
+            })
+
+        .then(() => api.getBoard())
+            .then(function(board){
+                gameBoard = board;
+            })
+        
+        .then(() => initializeBoard())
+
+        .then(() => api.getTank(username))
+            .then(function(tank){
+                userTank = tank;
+            })
+
+        .then(() => api.getTanks(tanks))
+            .then(function(data){
+                data.forEach(tank => {
+                    tanks.set(tank.name, tank);
+                });
+            })
+
+        .then(() => placeTanks())
+        .then(() => subscribe())
+        .then(() => addListeners());
+    }
 
     return {
-        init: function () {
-            getUsername()
-                    .then(() => getBoard())
-                    .then(() => initializeBoard())
-                    .then(() => getTank())
-                    .then(() => getTanks())
-                    .then(() => placeTanks())
-                    .then(() => subscribe());
-        }
+        init: init,
     }
 })();
