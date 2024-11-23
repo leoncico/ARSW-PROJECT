@@ -2,14 +2,14 @@ package edu.escuelaing.co.leotankcicos.model;
 
 public class Bullet {
 
-    private int id;
+    private String id;
     private int x;
     private int y;
     private int direction;
     private boolean alive;
     private String tankId;
 
-    public Bullet(int id, int x, int y, int direction, boolean alive, String tankId) {
+    public Bullet(String id, int x, int y, int direction, boolean alive, String tankId) {
         this.id = id;
         this.x = x;
         this.y = y;
@@ -18,11 +18,11 @@ public class Bullet {
         this.tankId = tankId;
     }
 
-    public int getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(String id) {
         this.id = id;
     }
 
