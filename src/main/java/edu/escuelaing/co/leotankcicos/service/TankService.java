@@ -22,8 +22,7 @@ public class TankService {
     private final Object bulletLock = new Object();
     private static final int MAX_PLAYERS = 3;
 
-    private final AtomicInteger bulletId;
-    private final ConcurrentHashMap<Integer, Bullet> bullets;
+    private final ConcurrentHashMap<String, Bullet> bullets;
     private final ConcurrentHashMap<String, Tank> tanks;
 
     @Autowired
@@ -31,9 +30,8 @@ public class TankService {
         this.board = board;
         this.bullets = new ConcurrentHashMap<>();
         this.tanks = new ConcurrentHashMap<>();
-        this.bulletId = new AtomicInteger(0);
-        initialConfig();
         this.msgt = msgt;
+        initialConfig();
     }
 
     private void initialConfig() {
@@ -123,7 +121,7 @@ public class TankService {
         }
     }
 
-    public Bullet shoot(String username) {
+    public Bullet shoot(String username, String bulletId) {
         Tank tank = tanks.get(username);
         if (tank == null) {
             return null;
@@ -132,7 +130,7 @@ public class TankService {
         Bullet bullet;
         synchronized (bulletLock) {
             bullet = new Bullet(
-                    bulletId.getAndIncrement(),
+                    bulletId,
                     tank.getPosx(),
                     tank.getPosy(),
                     tank.getRotation(),
@@ -212,7 +210,7 @@ public class TankService {
         response.put("tank", tank.getName());
         response.put("x", String.valueOf(tank.getPosx()));
         response.put("y", String.valueOf(tank.getPosy()));
-        msgt.convertAndSend("/topic/matches/1/bullets", board.getBoxes());
+        response.put("bulletId", bullet.getId());
         msgt.convertAndSend("/topic/matches/1/collisionResult", response);
         System.out.println("¡Colisión! Tanque " + tank.getName() + " ha sido golpeado");
 

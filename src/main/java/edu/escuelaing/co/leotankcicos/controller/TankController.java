@@ -113,8 +113,9 @@ public class TankController {
     }
 
     @MessageMapping("/{username}/shoot")
-    public void handleShootEvent(@DestinationVariable String username) {
-        tankService.shoot(username);
+    public void handleShootEvent(@DestinationVariable String username, @RequestBody String bulletId) {
+        System.out.println(bulletId);
+        tankService.shoot(username, bulletId);
     }
 
     @MessageMapping("/matches/1/winner")
