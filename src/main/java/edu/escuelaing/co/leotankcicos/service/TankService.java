@@ -15,20 +15,20 @@ public class TankService {
     SimpMessagingTemplate msgt;
     private Queue<int[]> defaultPositions = new LinkedList<>();
     private Queue<String> defaultColors = new LinkedList<>();
-    private Board board;
     private final Object bulletLock = new Object();
     private static final int MAX_PLAYERS = 3;
-    
-    //private final ConcurrentHashMap<String, Bullet> bullets;
 
     private TankRepository tankRepository;
     private BulletRepository bulletRepository;
-    //private final ConcurrentHashMap<String, Bullet> activeBullets;
+    private BoardRepository boardRepository;
+    private Board board;
 
     @Autowired
-    public TankService(Board board, SimpMessagingTemplate msgt, TankRepository tankRepository, BulletRepository bulletRepository) {
-        this.board = board;
-        //this.activeBullets = new ConcurrentHashMap<>();
+    public TankService(BoardRepository boardRepository, SimpMessagingTemplate msgt, TankRepository tankRepository, BulletRepository bulletRepository) {
+        this.boardRepository = boardRepository;
+        this.board = boardRepository.findAll().stream()
+            .findFirst()
+            .orElse(new Board());
         this.msgt = msgt;
         this.tankRepository = tankRepository;
         this.bulletRepository = bulletRepository;
@@ -47,6 +47,10 @@ public class TankService {
         defaultColors.add("#0c7036");
     }
 
+    private void saveOrUpdateBoard(){
+        boardRepository.save(board);
+    }
+
     public synchronized Tank saveTank(String name) throws Exception {
         if (tankRepository.count() >= MAX_PLAYERS) {
             throw new Exception("The room is full");
@@ -57,6 +61,7 @@ public class TankService {
         int[] position = defaultPositions.poll();
         Tank newTank = new Tank(position[0], position[1], defaultColors.poll(), 0, name);
         board.putTank(name, position[0], position[1]);
+        saveOrUpdateBoard();
         tankRepository.save(newTank);
         return newTank;
     }
@@ -103,6 +108,7 @@ public class TankService {
 
                 board.clearBox(x, y);
                 board.putTank(tank.getName(), newX, newY);
+                saveOrUpdateBoard();
                 tank.setPosx(newX);
                 tank.setPosy(newY);
                 tank.setRotation(rotation);
@@ -110,7 +116,7 @@ public class TankService {
             }
         }
         msgt.convertAndSend("/topic/matches/1/movement", tank);
-        printBoard(getBoard());
+        printBoard(getBoardBoxes());
         return tank;
     }
 
@@ -212,6 +218,7 @@ public class TankService {
     private void handleCollision(Bullet bullet, Tank tank) {
         tankRepository.deleteById(tank.getName());
         board.clearBox(tank.getPosx(), tank.getPosy());
+        saveOrUpdateBoard();
         CompletableFuture.runAsync(() -> {
             Map<String, String> response = new HashMap<>();
             response.put("tank", tank.getName());
@@ -237,7 +244,7 @@ public class TankService {
         }
     }
 
-    public String[][] getBoard() {
+    public String[][] getBoardBoxes() {
         return board.getBoxes();
     }
 
@@ -253,6 +260,7 @@ public class TankService {
         System.out.println("¡El ganador es: " + winner.getName() + "!");
         tankRepository.deleteAll();
         board.clearBoard();
+        saveOrUpdateBoard();
         msgt.convertAndSend("/topic/matches/1/winner", winner);
     }
 
@@ -260,7 +268,7 @@ public class TankService {
         tankRepository.deleteAll();
         bulletRepository.deleteAll();
         board.clearBoard();
-        //activeBullets.clear();
+        saveOrUpdateBoard();
         initialConfig();
     }
 }

@@ -95,7 +95,7 @@ public class TankController {
 
     @GetMapping("/board")
     public ResponseEntity<String[][]> getBoard() {
-        String[][] board = tankService.getBoard();
+        String[][] board = tankService.getBoardBoxes();
         if (board == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }

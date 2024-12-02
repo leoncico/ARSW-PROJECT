@@ -37,7 +37,15 @@ public class Board {
             {"1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1"}
         };
     }
+    
+    public String getId(){
+        return this.id;
+    }
 
+    public void setId(String id){
+        this.id = id;
+    }
+    
     public String getValue(int x, int y) {
         return boxes[y][x];
     }
