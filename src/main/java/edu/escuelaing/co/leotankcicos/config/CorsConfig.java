@@ -1,4 +1,4 @@
-package edu.escuelaing.co.leotankcicos;
+package edu.escuelaing.co.leotankcicos.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
