@@ -24,4 +24,22 @@ public class SecurityConfig {
             .oauth2Login(); // Configuración de OAuth2
         return http.build();
     }
+
+    @Bean
+    public ClientRegistrationRepository clientRegistrationRepository() {
+        return new InMemoryClientRegistrationRepository(clientRegistration());
+    }
+
+    @Bean
+    public ClientRegistration clientRegistration() {
+        return ClientRegistration.withRegistrationId("azure")
+                .clientId("your-client-id")
+                .clientSecret("your-client-secret")
+                .scope("openid", "profile", "email")
+                .authorizationUri("https://login.microsoftonline.com/{tenant}/oauth2/authorize")
+                .tokenUri("https://login.microsoftonline.com/{tenant}/oauth2/token")
+                .userInfoUri("https://graph.microsoft.com/v1.0/me")
+                .clientName("Azure OAuth2")
+                .build();
+    }
 }
