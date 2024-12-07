@@ -97,10 +97,19 @@
 		</dependency>
 
 		<!-- https://mvnrepository.com/artifact/com.azure.spring/azure-spring-boot-starter-active-directory -->
+		<!-- https://mvnrepository.com/artifact/com.azure.spring/spring-cloud-azure-starter-active-directory -->
 		<dependency>
 			<groupId>com.azure.spring</groupId>
-			<artifactId>azure-spring-boot-starter-active-directory</artifactId>
-			<version>4.0.0</version>
+			<artifactId>spring-cloud-azure-starter-active-directory</artifactId>
+			<version>5.18.0</version>
+		</dependency>
+
+
+		<!-- https://mvnrepository.com/artifact/org.springframework.security/spring-security-oauth2-resource-server -->
+		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-oauth2-resource-server</artifactId>
+			<version>6.4.1</version>
 		</dependency>
 
 	</dependencies>

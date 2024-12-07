@@ -23,7 +23,7 @@ import edu.escuelaing.co.leotankcicos.service.TankService;
 import jakarta.servlet.http.HttpSession;
 
 @RestController
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = "https://frontarsw.z22.web.core.windows.net")
 @RequestMapping("/api/tanks")
 public class TankController {
 
@@ -35,7 +35,7 @@ public class TankController {
     }
 
     //Crea los tanques
-    @PostMapping("/login")
+    @PostMapping("/loginTank")
     public ResponseEntity<?> createTank(@RequestParam String username, HttpSession session) {
         session.setAttribute("username", username);
         Tank newTank;
