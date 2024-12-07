@@ -25,23 +25,24 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // @Bean
-    // public ClientRegistrationRepository clientRegistrationRepository() {
-    //     return new InMemoryClientRegistrationRepository(clientRegistration());
-    // }
+    @Bean
+    public ClientRegistrationRepository clientRegistrationRepository() {
+        return new InMemoryClientRegistrationRepository(clientRegistration());
+    }
 
-    // @Bean
-    // public ClientRegistration clientRegistration() {
-    //     return ClientRegistration.withRegistrationId("azure")
-    //             .clientId("47c6a63b-2699-4c84-bd3e-e761c37671fd")
-    //             .clientSecret("f8P8Q~R.Odx2_LKlmVMeI6BXfoexbomvPOr.ncF.")
-    //             .scope("openid", "profile", "email")
-    //             .authorizationUri("https://login.microsoftonline.com/db7dde3f-69fc-4e7b-9d6e-0e5a535c77c5/oauth2/authorize")
-    //             .tokenUri("https://login.microsoftonline.com/db7dde3f-69fc-4e7b-9d6e-0e5a535c77c5/oauth2/token")
-    //             .userInfoUri("https://graph.microsoft.com/v1.0/me")
-    //             .clientName("Azure OAuth2")
-    //             .build();
-    // }
+    @Bean
+    public ClientRegistration clientRegistration() {
+        return ClientRegistration.withRegistrationId("azure")
+                .clientId("47c6a63b-2699-4c84-bd3e-e761c37671fd")
+                .clientSecret("f8P8Q~R.Odx2_LKlmVMeI6BXfoexbomvPOr.ncF.")
+                .scope("openid", "profile", "email")
+                .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE) // Especifica el grant type
+                .authorizationUri("https://login.microsoftonline.com/db7dde3f-69fc-4e7b-9d6e-0e5a535c77c5/oauth2/authorize")
+                .tokenUri("https://login.microsoftonline.com/db7dde3f-69fc-4e7b-9d6e-0e5a535c77c5/oauth2/token")
+                .userInfoUri("https://graph.microsoft.com/v1.0/me")
+                .clientName("Azure OAuth2")
+                .build();
+    }
 
     
 }
