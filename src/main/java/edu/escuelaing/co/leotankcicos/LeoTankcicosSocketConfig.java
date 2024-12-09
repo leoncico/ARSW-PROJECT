@@ -13,8 +13,9 @@ public class LeoTankcicosSocketConfig implements WebSocketMessageBrokerConfigure
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
-        config.enableSimpleBroker("/topic");  // Configura el broker simple en el prefijo /topic
-        config.setApplicationDestinationPrefixes("/app");  // Prefijo para los mensajes de la aplicación
+        config.enableSimpleBroker("/topic")
+            .setAllowedOrigins("https://frontarsw.z22.web.core.windows.net");  // Añade esta línea
+        config.setApplicationDestinationPrefixes("/app");
     }
 
     @Override
