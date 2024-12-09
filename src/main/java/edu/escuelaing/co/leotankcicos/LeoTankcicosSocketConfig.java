@@ -5,6 +5,7 @@ import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
+import org.springframework.web.socket.server.support.HttpSessionHandshakeInterceptor;
 
 @Configuration
 @EnableWebSocketMessageBroker
@@ -18,6 +19,8 @@ public class LeoTankcicosSocketConfig implements WebSocketMessageBrokerConfigure
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/stompendpoint").withSockJS();  // Define el endpoint
+        registry.addEndpoint("/stompendpoint")
+            .setAllowedOrigins("https://frontarsw.z22.web.core.windows.net")
+            .withSockJS();
     }
 }
