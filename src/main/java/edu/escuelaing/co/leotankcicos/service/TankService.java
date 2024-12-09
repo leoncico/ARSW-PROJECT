@@ -116,7 +116,7 @@ public class TankService {
                 tankRepository.save(tank);
             }
         }
-        msgt.convertAndSend(FRONTULR + "/topic/matches/1/movement", tank);
+        msgt.convertAndSend("/topic/matches/1/movement", tank);
         printBoard(getBoardBoxes());
         return tank;
     }
