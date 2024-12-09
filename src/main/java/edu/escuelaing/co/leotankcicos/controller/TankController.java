@@ -72,7 +72,7 @@ public class TankController {
     }
 
     // Mover tanque 
-    @MessageMapping("/{username}/move")
+    @MessageMapping("/app/{username}/move")
     public void moveTank(@DestinationVariable String username, @RequestBody Map<String, Integer> moveRequest){
         Integer posX = moveRequest.get("posX");
         Integer posY = moveRequest.get("posY");
