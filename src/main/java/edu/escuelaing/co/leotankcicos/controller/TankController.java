@@ -24,7 +24,6 @@ import jakarta.servlet.http.HttpSession;
 
 @RestController
 @CrossOrigin(origins = "https://frontarsw.z22.web.core.windows.net")
-@RequestMapping("/")
 public class TankController {
 
     private final TankService tankService;
@@ -34,7 +33,7 @@ public class TankController {
         this.tankService = tankService;
     }
 
-    @GetMapping
+    @GetMapping("/")
     public ResponseEntity<?> ok(){
         return new ResponseEntity(HttpStatus.OK);
     }
@@ -55,7 +54,7 @@ public class TankController {
     }
 
     //Obtiene todos los tanques
-    @GetMapping
+    @GetMapping("/api/tanks")
     public ResponseEntity<List<Tank>> getAllTanks() {
         List<Tank> tanks = tankService.getAllTanks();
         return new ResponseEntity<>(tanks, HttpStatus.OK);
