@@ -72,7 +72,7 @@ public class TankController {
     }
 
     // Mover tanque 
-    @MessageMapping("/app/{username}/move")
+    @MessageMapping("/{username}/move")
     public void moveTank(@DestinationVariable String username, @RequestBody Map<String, Integer> moveRequest){
         Integer posX = moveRequest.get("posX");
         Integer posY = moveRequest.get("posY");
@@ -115,13 +115,13 @@ public class TankController {
         return new ResponseEntity<>(bullet, HttpStatus.OK);
     }
 
-    @MessageMapping("/api/tanks/{username}/shoot")
+    @MessageMapping("/{username}/shoot")
     public void handleShootEvent(@DestinationVariable String username, @RequestBody String bulletId) {
         System.out.println(bulletId);
         tankService.shoot(username, bulletId);
     }
 
-    @MessageMapping("/api/tanks/matches/1/winner")
+    @MessageMapping("/matches/1/winner")
     public void handleWinnerEvent() {
         tankService.handleWinner();
     }
