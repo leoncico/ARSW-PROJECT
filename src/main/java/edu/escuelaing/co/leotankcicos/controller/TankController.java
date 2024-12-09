@@ -36,7 +36,7 @@ public class TankController {
 
     @GetMapping
     public ResponseEntity<?> ok(){
-        return new ResponseEntity(HttpStatus.ok);
+        return new ResponseEntity(HttpStatus.OK);
     }
 
     //Crea los tanques
