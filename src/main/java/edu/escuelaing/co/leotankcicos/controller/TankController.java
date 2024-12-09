@@ -24,7 +24,7 @@ import jakarta.servlet.http.HttpSession;
 
 @RestController
 @CrossOrigin(origins = "https://frontarsw.z22.web.core.windows.net")
-@RequestMapping("/api/tanks")
+@RequestMapping("/")
 public class TankController {
 
     private final TankService tankService;
@@ -34,8 +34,13 @@ public class TankController {
         this.tankService = tankService;
     }
 
+    @GetMapping
+    public ResponseEntity<?> ok(){
+        return new ResponseEntity(HttpStatus.ok);
+    }
+
     //Crea los tanques
-    @PostMapping("/loginTank")
+    @PostMapping("/api/tanks/loginTank")
     public ResponseEntity<?> createTank(@RequestParam String username, HttpSession session) {
         session.setAttribute("username", username);
         Tank newTank;
@@ -57,7 +62,7 @@ public class TankController {
     }
 
     // Ruta para obtener el nombre de usuario
-    @GetMapping("/username")
+    @GetMapping("/api/tanks/username")
     public ResponseEntity<String> getUsername(HttpSession session) {
         String username = (String) session.getAttribute("username");
         if (username != null) {
@@ -68,7 +73,7 @@ public class TankController {
     }
 
     // Mover tanque 
-    @MessageMapping("/{username}/move")
+    @MessageMapping("/api/tanks/{username}/move")
     public void moveTank(@DestinationVariable String username, @RequestBody Map<String, Integer> moveRequest){
         Integer posX = moveRequest.get("posX");
         Integer posY = moveRequest.get("posY");
@@ -84,7 +89,7 @@ public class TankController {
     }
 
     // Obtener un tanque específico
-    @GetMapping("/{username}")
+    @GetMapping("/api/tanks/{username}")
     public ResponseEntity<Tank> getTank(@PathVariable String username) {
         Tank tank = tankService.getTankById(username);
         if (tank == null) {
@@ -93,7 +98,7 @@ public class TankController {
         return new ResponseEntity<>(tank, HttpStatus.OK);
     }
 
-    @GetMapping("/board")
+    @GetMapping("/api/tanks/board")
     public ResponseEntity<String[][]> getBoard() {
         String[][] board = tankService.getBoardBoxes();
         if (board == null) {
@@ -102,7 +107,7 @@ public class TankController {
         return new ResponseEntity<>(board, HttpStatus.OK);
     }
 
-    @GetMapping("/bullets/{bulletId}/position")
+    @GetMapping("/api/tanks/bullets/{bulletId}/position")
     public ResponseEntity<Bullet> getBulletPosition(@PathVariable String bulletId) {
         Bullet bullet = tankService.getBulletPosition(bulletId);
         if (bullet == null) {
@@ -111,18 +116,18 @@ public class TankController {
         return new ResponseEntity<>(bullet, HttpStatus.OK);
     }
 
-    @MessageMapping("/{username}/shoot")
+    @MessageMapping("/api/tanks/{username}/shoot")
     public void handleShootEvent(@DestinationVariable String username, @RequestBody String bulletId) {
         System.out.println(bulletId);
         tankService.shoot(username, bulletId);
     }
 
-    @MessageMapping("/matches/1/winner")
+    @MessageMapping("/api/tanks/matches/1/winner")
     public void handleWinnerEvent() {
         tankService.handleWinner();
     }
 
-    @GetMapping("/matches/1/reset")
+    @GetMapping("/api/tanks/matches/1/reset")
     public ResponseEntity<String> resetGame() {
         tankService.reset();
         return new ResponseEntity<>("OK", HttpStatus.OK);
