@@ -22,6 +22,7 @@ public class TankService {
     private BulletRepository bulletRepository;
     private BoardRepository boardRepository;
     private Board board;
+    private static final String FRONTULR = "https://frontarsw.z22.web.core.windows.net";
 
     @Autowired
     public TankService(BoardRepository boardRepository, SimpMessagingTemplate msgt, TankRepository tankRepository, BulletRepository bulletRepository) {
@@ -115,7 +116,7 @@ public class TankService {
                 tankRepository.save(tank);
             }
         }
-        msgt.convertAndSend("/topic/matches/1/movement", tank);
+        msgt.convertAndSend(FRONTULR + "/topic/matches/1/movement", tank);
         printBoard(getBoardBoxes());
         return tank;
     }
