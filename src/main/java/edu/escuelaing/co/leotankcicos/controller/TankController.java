@@ -23,7 +23,7 @@ import edu.escuelaing.co.leotankcicos.service.TankService;
 import jakarta.servlet.http.HttpSession;
 
 @RestController
-@CrossOrigin(origins = "https://frontarsw.z22.web.core.windows.net")
+@CrossOrigin(origins = {"https://frontarsw.z22.web.core.windows.net/*", "https://leotanksload.duckdns.org/*"})
 public class TankController {
 
     private final TankService tankService;
