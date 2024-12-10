@@ -22,7 +22,6 @@ public class TankService {
     private BulletRepository bulletRepository;
     private BoardRepository boardRepository;
     private Board board;
-    private static final String FRONTULR = "https://frontarsw.z22.web.core.windows.net";
 
     @Autowired
     public TankService(BoardRepository boardRepository, SimpMessagingTemplate msgt, TankRepository tankRepository, BulletRepository bulletRepository) {
